@@ -222,6 +222,24 @@ namespace MyCAD1
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+        public static Point3d Convert3D(this Point3d theP3d, double x = 0, double y = 0,double z=0)
+        {
+            return new Point3d(theP3d.X + x, theP3d.Y + y,theP3d.Z+z);
+        }
+
+
         public static Point3d Convert3D(this Point2d theP2d, double x = 0, double y = 0)
         {
             return new Point3d(theP2d.X + x, theP2d.Y + y,0);
@@ -231,6 +249,7 @@ namespace MyCAD1
             return new Point2d(theP2d.X + x, theP2d.Y + y);
         }
 
+        
         
         /// <summary>
         /// 平面\立面视口.

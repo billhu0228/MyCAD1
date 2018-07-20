@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 
 namespace MyCAD1
 {
+    
+        
     class Dalot
     {
         public enum AType { BZQ, JSJ,None,Other };
@@ -21,7 +23,7 @@ namespace MyCAD1
         public double Pk;
         public double Ang, Slop;        
         public double Length, SegLength;
-        public double Xoffset;
+        public double XMidDist;
         public AType Amont, Avale;
         public DType DalotType;
         public Point2d BasePoint;
@@ -33,12 +35,12 @@ namespace MyCAD1
         public Dalot()
         {
             Pk = 100518.0;
-            Ang = 0;
+            Ang = 1; // 偏角，从(1,0)方向逆时针，角度
             Slop = -0.01;
-            DalotType = DType.A;
+            DalotType = DType.B;
             Length = 16000;
-            SegLength = 2000;
-            Xoffset = 0;
+            SegLength = 3000;
+            XMidDist = 8000;
             Amont = AType.BZQ;
             Avale = AType.BZQ;
             LayerNum = 2;
@@ -115,20 +117,151 @@ namespace MyCAD1
         //    excel.Quit();
         //    return;
         //}
-        public void PlotA()
+
+
+
+        /// <summary>
+        /// 绘制平面图
+        /// </summary>
+        /// <param name="db">数据库</param>
+        /// <param name="AnchorPoint">锚点</param>
+        /// <param name="s">制图比例</param>
+        public void PlotA(Database db, Point2d AnchorPoint, int s = 100)
         {
+            // 基本句柄
+            Transaction tr = db.TransactionManager.StartTransaction();
+            BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+            BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                OpenMode.ForWrite) as BlockTableRecord;
+            DimStyleTable dst = (DimStyleTable)tr.GetObject(db.DimStyleTableId, OpenMode.ForRead);
+            var dsId = dst["1-" + s.ToString()];
+            Point2d BB = AnchorPoint;
+            Point3dCollection pts = new Point3dCollection();  // 交点获取
+            double ang_in_rad = Ang / 180 * Math.PI;
+            Line [] LSets;
+
+            if ((int)DalotType <= 4)
+            {
+                //一孔
+                double x0, x1, y0, y1;
+                x0 = -XMidDist*Math.Cos(Math.Atan(Slop));
+                x1 =  (Length-XMidDist) * Math.Cos(Math.Atan(Slop));
+                y0 = -0.5 * Sect[0] + x0 * Math.Tan(ang_in_rad);
+                y1 = -0.5 * Sect[0] + x1 * Math.Tan(ang_in_rad);
+                LSets = MulitlinePloter.PlotN(db, BB.Convert3D(x0, y0), BB.Convert3D(x1, y1),  // 涵身
+                    new double[] { 0, Sect[5], Sect[0]-Sect[5],Sect[0] },new string[] {"虚线", "虚线" , "虚线" , "虚线" },true);
+                //MulitlinePloter.PlotCutLine(db, LSets[0], LSets[LSets.Length - 1], GetSeps(), "虚线");
+
+
+
+
+
+
+            }
+            else if ((int) DalotType <= 6)
+            {
+                //两孔
+            }
+            else if ((int) DalotType <= 10)
+            {
+                //三孔
+
+            }
+            else
+            {
+                //四孔
+
+            }
+
+
+
+
+            tr.Commit();
+            tr.Dispose();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public void PlotB(Database db, Point2d AnchorPoint, int s = 100)
+        {
+            // 基本句柄
+            Transaction tr = db.TransactionManager.StartTransaction();
+            BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+            BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                OpenMode.ForWrite) as BlockTableRecord;
+            DimStyleTable dst = (DimStyleTable)tr.GetObject(db.DimStyleTableId, OpenMode.ForRead);
+            var dsId = dst["1-" + s.ToString()];
+            Point2d BB = AnchorPoint;
+            Point3dCollection pts = new Point3dCollection();  // 交点获取
+            Line[] LSets;
+            double slop_rad = Math.Atan(Slop);
+
+            if ((int)DalotType <= 4)
+            {
+                //一孔
+                double x0, x1, y0, y1;
+                x0 = -XMidDist*Math.Cos(slop_rad) ;
+                x1 = (Length-XMidDist)*Math.Cos(slop_rad) ;
+
+                y0 = -XMidDist * Math.Sin(slop_rad);
+                y1 = (Length - XMidDist) * Math.Sin(slop_rad);
+
+                LSets = MulitlinePloter.PlotN(db, BB.Convert3D(x0, y0), BB.Convert3D(x1, y1),  // 涵身
+                    new double[] { 0, Sect[5], Sect[0] - Sect[5], Sect[0] }, new string[] { "虚线", "虚线", "虚线", "虚线" }, true);
+                MulitlinePloter.PlotCutLine(db, LSets[0], LSets[LSets.Length - 1], GetSeps(), "虚线");
+
+
+
+
+
+
+            }
+            else if ((int)DalotType <= 6)
+            {
+                //两孔
+            }
+            else if ((int)DalotType <= 10)
+            {
+                //三孔
+
+            }
+            else
+            {
+                //四孔
+
+            }
+
+
+
+
+            tr.Commit();
+            tr.Dispose();
+
 
         }
-        public void PlotB()
-        {
 
-        }
+
+
+
+
+
         /// <summary>
         /// 绘制剖面图
         /// </summary>
         /// <param name="s">绘图比例，默认1:75</param>
         public void PlotC(Database db,Point2d AnchorPoint, int s = 75)
         {
+            // 基本句柄
             Transaction tr = db.TransactionManager.StartTransaction();
             BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
             BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace], 
@@ -226,8 +359,10 @@ namespace MyCAD1
                 }
                 DimPloter.Dim0(db, PL3.GetPoint3dAt(0), PL1.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, 500), dsId);
                 DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL3.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, 500), dsId);
+                DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(-0.25 * Sect[0], 100), true,s);
+                DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(+0.25 * Sect[0], 100), false,s);
 
-
+                //-------------------------------------------------------------------------------------------
 
 
 
@@ -253,7 +388,119 @@ namespace MyCAD1
         }
 
 
-
+        private double [] GetSeps()
+        {
+            double[] res;
+            int numSeg;
+            double sideLength;
+            double deltLength = 0.5 * Sect[0] * Math.Tan(Ang / 180 * Math.PI);
+            if (Amont == AType.JSJ)
+            {
+                // 集水井不对称分割
+                sideLength = (Length % SegLength);
+                if (sideLength == 0)
+                {
+                    // 无残余
+                    numSeg = (int)(Length / SegLength);
+                    res = new double[numSeg];
+                    for (int j = 0; j < numSeg; j++)
+                    {
+                        res[j] = SegLength;
+                        if (j == 0)
+                        {
+                            res[j] += deltLength;
+                        }
+                        else if (j == numSeg - 1)
+                        {
+                            res[j] -= deltLength;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+                else
+                {
+                    // 有残余
+                    numSeg = (int)(Length / SegLength)+1;
+                    res = new double[numSeg];
+                    for (int j = 0; j < numSeg; j++)
+                    {
+                        res[j] = SegLength;
+                        if (j == numSeg - 1)
+                        {
+                            res[j] =sideLength- deltLength;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // 八字墙对称分割
+                sideLength = (Length % SegLength) * 0.5;
+                if (sideLength == 0)
+                {
+                    // 整节段数
+                    numSeg = (int)(Length / SegLength);
+                    res = new double[numSeg];
+                    for(int j = 0; j < numSeg; j++)
+                    {
+                        res[j] = SegLength;
+                        if(j==0)
+                        {
+                            res[j] += deltLength;
+                        }
+                        else if (j == numSeg - 1)
+                        {
+                            res[j] -= deltLength;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                        
+                    }
+                }
+                else
+                {
+                    // 有残余节段
+                    numSeg = (int)(Length / SegLength) + 2;
+                    res = new double[numSeg];
+                    for (int j = 0; j < numSeg; j++)
+                    {
+                        if (j == 0)
+                        {
+                            res[j] =sideLength+ deltLength;
+                        }
+                        else if (j == numSeg - 1)
+                        {
+                            res[j] =sideLength- deltLength;
+                        }
+                        else
+                        {
+                            res[j] = SegLength;
+                        }
+                    }
+                }
+            }
+            double[] offsetList = new double[res.Length - 1];
+            for(int jj = 0; jj < offsetList.Length; jj++)
+            {
+                offsetList[jj] = 0;
+                for(int ii = 0; ii <= jj; ii++)
+                {
+                    offsetList[jj] += res[ii];
+                }
+                
+            }
+            return offsetList;
+            
+        }
 
     }
 }

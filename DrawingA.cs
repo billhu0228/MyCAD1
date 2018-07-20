@@ -42,7 +42,10 @@ namespace MyCAD1
             }
 
             //绘图，成图
+            TheDalot.PlotA(db, Point2d.Origin.Convert2D(0, 0), 100);
+
             TheDalot.PlotC(db,Point2d.Origin.Convert2D(20000,-20000), 75);
+            
 
 
         }

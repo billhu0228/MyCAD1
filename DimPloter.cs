@@ -46,5 +46,54 @@ namespace MyCAD1
 
         }
 
+
+        /// <summary>
+        /// 左右横坡
+        /// </summary>
+        /// <param name="db">CAD数据库</param>
+        /// <param name="hpdata">横坡数值，不含%</param>
+        /// <param name="refpt">插入点3d</param>
+        /// <param name="isLeft">是否向左</param>
+
+
+        public static void HengPo(Database db, double hpdata, Point3d refpt, bool isLeft,double scale=100)
+        {
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+                ObjectId blkRecId;
+                if (isLeft) { blkRecId = blockTbl["ZP"]; }
+                else
+                { blkRecId = blockTbl["YP"]; }
+                BlockReference acBlkRef = new BlockReference(refpt, blkRecId);
+                acBlkRef.Layer = "标注";
+                acBlkRef.ScaleFactors = new Scale3d(0.01*scale);
+                modelSpace.AppendEntity(acBlkRef);
+                tr.AddNewlyCreatedDBObject(acBlkRef, true);
+
+
+                BlockTableRecord zheshiyuankuai;
+                zheshiyuankuai = tr.GetObject(blkRecId, OpenMode.ForRead) as BlockTableRecord;
+                foreach (ObjectId gezhongshuxingID in zheshiyuankuai)
+                {
+                    DBObject gezhongshuxing = tr.GetObject(gezhongshuxingID, OpenMode.ForRead) as DBObject;
+                    if (gezhongshuxing is AttributeDefinition)
+                    {
+                        AttributeDefinition acAtt = gezhongshuxing as AttributeDefinition;
+                        using (AttributeReference acAttRef = new AttributeReference())
+                        {
+                            acAttRef.SetAttributeFromBlock(acAtt, acBlkRef.BlockTransform);
+                            acAttRef.Position = acAtt.Position.TransformBy(acBlkRef.BlockTransform);
+                            acAttRef.TextString = String.Format("{0:f2}%", hpdata);
+                            acBlkRef.AttributeCollection.AppendAttribute(acAttRef);
+                            tr.AddNewlyCreatedDBObject(acAttRef, true);
+                        }
+                    }
+                }
+                tr.Commit();
+            }            
+        }
     }
 }

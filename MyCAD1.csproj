@@ -61,6 +61,7 @@
     <Compile Include="CADini.cs" />
     <Compile Include="DimPloter.cs" />
     <Compile Include="HatchPloter.cs" />
+    <Compile Include="MultilinePloter.cs" />
     <Compile Include="PolylinePloter.cs" />
     <Compile Include="Dalot.cs" />
     <Compile Include="Culvert.cs" />
