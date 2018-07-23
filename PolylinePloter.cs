@@ -83,7 +83,7 @@ namespace MyCAD1
                 PL1.AddVertexAt(1, p1, 0, 0, 0);
                 PL1.AddVertexAt(2, p2, 0, 0, 0);
                 PL1.AddVertexAt(3, p3, 0, 0, 0);
-
+                
                 modelSpace.AppendEntity(PL1);
                 tr.AddNewlyCreatedDBObject(PL1, true);
                 tr.Commit();
@@ -114,7 +114,9 @@ namespace MyCAD1
         }
 
 
-
+        
+          
+       
 
 
 

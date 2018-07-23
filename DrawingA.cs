@@ -43,9 +43,9 @@ namespace MyCAD1
 
             //绘图，成图
             TheDalot.PlotA(db, Point2d.Origin.Convert2D(0, 0), 100);
+            TheDalot.PlotB(db, Point2d.Origin.Convert2D(0, -20000), 100);
+            TheDalot.PlotC(db, Point2d.Origin.Convert2D(20000, -20000), 75);
 
-            TheDalot.PlotC(db,Point2d.Origin.Convert2D(20000,-20000), 75);
-            
 
 
         }
@@ -62,7 +62,7 @@ namespace MyCAD1
 
         private static string GetXPath()
         {
-            string xpath = "";            
+            string xpath = "";
             WFM.OpenFileDialog dialog = new WFM.OpenFileDialog();
             dialog.InitialDirectory = "G:\\涵洞自动成图程序";
             dialog.Filter = "ext files (*.xls)|*.xls|All files(*.*)|*>**";
@@ -78,7 +78,7 @@ namespace MyCAD1
             }
             return xpath;
         }
-        
+
 
     }
 }

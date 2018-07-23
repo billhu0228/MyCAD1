@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
-using MOE=Microsoft.Office.Interop.Excel;
+using MOE = Microsoft.Office.Interop.Excel;
 using System.IO;
 using System.Reflection;
 using System.Linq;
@@ -14,14 +14,14 @@ using System.Threading.Tasks;
 
 namespace MyCAD1
 {
-    
-        
+
+
     class Dalot
     {
-        public enum AType { BZQ, JSJ,None,Other };
-        public enum DType {A,B,C,D,E,F,G,H,I,J,K,L}
+        public enum AType { BZQ, JSJ, None, Other };
+        public enum DType { A, B, C, D, E, F, G, H, I, J, K, L }
         public double Pk;
-        public double Ang, Slop;        
+        public double Ang, Slop;
         public double Length, SegLength;
         public double XMidDist;
         public AType Amont, Avale;
@@ -45,13 +45,13 @@ namespace MyCAD1
             Avale = AType.BZQ;
             LayerNum = 2;
             BasePoint = new Point2d(0, 0);
-            switch(DalotType)
+            switch (DalotType)
             {
                 case DType.A:
-                    Sect = new double[] { 1900, 1900, 1400, 200, 200, 200,50,50,200,100 };
+                    Sect = new double[] { 1900, 1900, 1400, 200, 200, 200, 50, 50, 200, 100 };
                     break;
                 case DType.B:
-                    Sect = new double[] {2500,2500,2000,250,250,250, 50, 50, 200, 100 };
+                    Sect = new double[] { 2500, 2500, 2000, 250, 250, 250, 50, 50, 200, 100 };
                     break;
                 case DType.C:
                     Sect = new double[] { 4700, 4700, 2800, 400, 400, 350, 50, 50, 200, 100 };
@@ -104,7 +104,7 @@ namespace MyCAD1
         //    MOE.Range rgUsed = ws.UsedRange;
         //    MOE.Range rgFound;
         //    int iRowNum = 2;
-            
+
         //    foreach(string thename in colnames)
         //    {
         //        rgFound = (MOE.Range)rgUsed.Find(thename, Type.Missing, MOE.XlFindLookIn.xlValues,
@@ -134,22 +134,22 @@ namespace MyCAD1
             BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                 OpenMode.ForWrite) as BlockTableRecord;
             DimStyleTable dst = (DimStyleTable)tr.GetObject(db.DimStyleTableId, OpenMode.ForRead);
-            var dsId = dst["1-" + s.ToString()];
+            var DimStyleID = dst["1-" + s.ToString()];
             Point2d BB = AnchorPoint;
             Point3dCollection pts = new Point3dCollection();  // 交点获取
             double ang_in_rad = Ang / 180 * Math.PI;
-            Line [] LSets;
+            Line[] LSets;
 
-            if ((int)DalotType <= 4)
+            if (DalotType <= DType.E)
             {
                 //一孔
                 double x0, x1, y0, y1;
-                x0 = -XMidDist*Math.Cos(Math.Atan(Slop));
-                x1 =  (Length-XMidDist) * Math.Cos(Math.Atan(Slop));
+                x0 = -XMidDist * Math.Cos(Math.Atan(Slop));
+                x1 = (Length - XMidDist) * Math.Cos(Math.Atan(Slop));
                 y0 = -0.5 * Sect[0] + x0 * Math.Tan(ang_in_rad);
                 y1 = -0.5 * Sect[0] + x1 * Math.Tan(ang_in_rad);
                 LSets = MulitlinePloter.PlotN(db, BB.Convert3D(x0, y0), BB.Convert3D(x1, y1),  // 涵身
-                    new double[] { 0, Sect[5], Sect[0]-Sect[5],Sect[0] },new string[] {"虚线", "虚线" , "虚线" , "虚线" },true);
+                    new double[] { 0, Sect[5], Sect[0] - Sect[5], Sect[0] }, new string[] { "虚线", "虚线", "虚线", "虚线" }, true);
                 //MulitlinePloter.PlotCutLine(db, LSets[0], LSets[LSets.Length - 1], GetSeps(), "虚线");
 
 
@@ -158,11 +158,11 @@ namespace MyCAD1
 
 
             }
-            else if ((int) DalotType <= 6)
+            else if ((int)DalotType <= 6)
             {
                 //两孔
             }
-            else if ((int) DalotType <= 10)
+            else if ((int)DalotType <= 10)
             {
                 //三孔
 
@@ -200,7 +200,7 @@ namespace MyCAD1
             BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                 OpenMode.ForWrite) as BlockTableRecord;
             DimStyleTable dst = (DimStyleTable)tr.GetObject(db.DimStyleTableId, OpenMode.ForRead);
-            var dsId = dst["1-" + s.ToString()];
+            var DimStyleID = dst["1-" + s.ToString()];
             Point2d BB = AnchorPoint;
             Point3dCollection pts = new Point3dCollection();  // 交点获取
             Line[] LSets;
@@ -210,8 +210,8 @@ namespace MyCAD1
             {
                 //一孔
                 double x0, x1, y0, y1;
-                x0 = -XMidDist*Math.Cos(slop_rad) ;
-                x1 = (Length-XMidDist)*Math.Cos(slop_rad) ;
+                x0 = -XMidDist * Math.Cos(slop_rad);
+                x1 = (Length - XMidDist) * Math.Cos(slop_rad);
 
                 y0 = -XMidDist * Math.Sin(slop_rad);
                 y1 = (Length - XMidDist) * Math.Sin(slop_rad);
@@ -259,15 +259,15 @@ namespace MyCAD1
         /// 绘制剖面图
         /// </summary>
         /// <param name="s">绘图比例，默认1:75</param>
-        public void PlotC(Database db,Point2d AnchorPoint, int s = 75)
+        public void PlotC(Database db, Point2d AnchorPoint, int s = 75)
         {
             // 基本句柄
             Transaction tr = db.TransactionManager.StartTransaction();
             BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-            BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace], 
+            BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                 OpenMode.ForWrite) as BlockTableRecord;
             DimStyleTable dst = (DimStyleTable)tr.GetObject(db.DimStyleTableId, OpenMode.ForRead);
-            var dsId = dst["1-" + s.ToString()];
+            var DimStyleID = dst["1-" + s.ToString()];
             Point2d BB = AnchorPoint;
             // 填充
             Hatch hatchref1 = new Hatch();
@@ -277,16 +277,16 @@ namespace MyCAD1
             Hatch hatchref3 = new Hatch();
             hatchref3.SetHatchPattern(HatchPatternType.PreDefined, "AR-CONC");
             Hatch hatch1, hatch2, hatch3, hatch4;
-            Polyline PL4=new Polyline();
+            Polyline PL4 = new Polyline();
 
             if ((int)DalotType <= 4)
             {
                 Polyline PL1 = PolylinePloter.Plot5(db, BB, Sect[2], Sect[0]);   // 外框
                 PL1.Layer = "粗线";
-                Polyline PL2 = PolylinePloter.Plot8(db, BB.Convert2D(0, Sect[3]), 
-                    Sect[2] - Sect[3] - Sect[4],Sect[0]-2*Sect[5]);
-                PL2.Layer = "粗线";                
-                Polyline PL3 = PolylinePloter.Plot4(db, BB.Convert2D(0,-100), 100,Sect[0]+2*200);   // 外框
+                Polyline PL2 = PolylinePloter.Plot8(db, BB.Convert2D(0, Sect[3]),
+                    Sect[2] - Sect[3] - Sect[4], Sect[0] - 2 * Sect[5]);
+                PL2.Layer = "粗线";
+                Polyline PL3 = PolylinePloter.Plot4(db, BB.Convert2D(0, -100), 100, Sect[0] + 2 * 200);   // 外框
                 PL3.Layer = "细线";
                 hatch1 = HatchPloter.PlotH(db, PL3, hatchref3, 1);
                 if (LayerNum == 2)
@@ -295,7 +295,7 @@ namespace MyCAD1
                     PL4.Layer = "细线";
                     hatch2 = HatchPloter.PlotH(db, PL4, hatchref2, 1);
                 }
-                Point2d[] pts = new Point2d[] 
+                Point2d[] pts = new Point2d[]
                 {
                     PL3.GetPoint2dAt(0).Convert2D(-300,0),
                     PL3.GetPoint2dAt(0).Convert2D(-300-100-Sect[2],100+Sect[2]),
@@ -330,37 +330,37 @@ namespace MyCAD1
 
 
                 // 标注
-                DimPloter.Dim0(db, PL1.GetPoint3dAt(4), PL2.GetPoint3dAt(7), PL1.GetPoint2dAt(4).Convert3D(0, 500), dsId);
-                DimPloter.Dim0(db, PL2.GetPoint3dAt(7), PL2.GetPoint3dAt(3), PL1.GetPoint2dAt(4).Convert3D(0, 500), dsId);
-                DimPloter.Dim0(db, PL2.GetPoint3dAt(3), PL1.GetPoint3dAt(2), PL1.GetPoint2dAt(4).Convert3D(0, 500), dsId);
+                DimPloter.Dim0(db, PL1.GetPoint3dAt(4), PL2.GetPoint3dAt(7), PL1.GetPoint2dAt(4).Convert3D(0, 500), DimStyleID);
+                DimPloter.Dim0(db, PL2.GetPoint3dAt(7), PL2.GetPoint3dAt(3), PL1.GetPoint2dAt(4).Convert3D(0, 500), DimStyleID);
+                DimPloter.Dim0(db, PL2.GetPoint3dAt(3), PL1.GetPoint3dAt(2), PL1.GetPoint2dAt(4).Convert3D(0, 500), DimStyleID);
 
-                DimPloter.Dim0(db, PL1.GetPoint3dAt(2), PL2.GetPoint3dAt(4), PL1.GetPoint2dAt(1).Convert3D(800, 0), dsId,0.5*Math.PI);
-                DimPloter.Dim0(db,  PL2.GetPoint3dAt(4), PL2.GetPoint3dAt(1),PL1.GetPoint2dAt(1).Convert3D(800, 0), dsId, 0.5 * Math.PI);
-                DimPloter.Dim0(db,  PL2.GetPoint3dAt(1),PL1.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(800, 0), dsId, 0.5 * Math.PI);
+                DimPloter.Dim0(db, PL1.GetPoint3dAt(2), PL2.GetPoint3dAt(4), PL1.GetPoint2dAt(1).Convert3D(800, 0), DimStyleID, 0.5 * Math.PI);
+                DimPloter.Dim0(db, PL2.GetPoint3dAt(4), PL2.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(800, 0), DimStyleID, 0.5 * Math.PI);
+                DimPloter.Dim0(db, PL2.GetPoint3dAt(1), PL1.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(800, 0), DimStyleID, 0.5 * Math.PI);
 
-                DimPloter.Dim0(db, PL1.GetPoint3dAt(2), PL1.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(1100, 0), dsId, 0.5 * Math.PI);
-                DimPloter.Dim0(db, PL3.GetPoint3dAt(2), PL3.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(1100, 0), dsId, 0.5 * Math.PI);
+                DimPloter.Dim0(db, PL1.GetPoint3dAt(2), PL1.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(1100, 0), DimStyleID, 0.5 * Math.PI);
+                DimPloter.Dim0(db, PL3.GetPoint3dAt(2), PL3.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(1100, 0), DimStyleID, 0.5 * Math.PI);
                 if (LayerNum == 2)
                 {
-                    DimPloter.Dim0(db, PL4.GetPoint3dAt(2), PL4.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(800, 0), dsId, 0.5 * Math.PI);
-                    DimPloter.Dim0(db, PL4.GetPoint3dAt(0), PL1.GetPoint3dAt(0), PL4.GetPoint2dAt(0).Convert3D(0, -1000), dsId);
-                    DimPloter.Dim0(db,  PL1.GetPoint3dAt(0), PL1.GetPoint3dAt(1),PL4.GetPoint2dAt(0).Convert3D(0, -1000), dsId);
-                    DimPloter.Dim0(db,  PL1.GetPoint3dAt(1),PL4.GetPoint3dAt(1), PL4.GetPoint2dAt(0).Convert3D(0, -1000), dsId);
-                    DimPloter.Dim0(db, PL4.GetPoint3dAt(3), PL3.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, 500), dsId);
-                    DimPloter.Dim0(db, PL3.GetPoint3dAt(1), PL4.GetPoint3dAt(2), PL3.GetPoint2dAt(0).Convert3D(0, 500), dsId);
+                    DimPloter.Dim0(db, PL4.GetPoint3dAt(2), PL4.GetPoint3dAt(1), PL1.GetPoint2dAt(1).Convert3D(800, 0), DimStyleID, 0.5 * Math.PI);
+                    DimPloter.Dim0(db, PL4.GetPoint3dAt(0), PL1.GetPoint3dAt(0), PL4.GetPoint2dAt(0).Convert3D(0, -1000), DimStyleID);
+                    DimPloter.Dim0(db, PL1.GetPoint3dAt(0), PL1.GetPoint3dAt(1), PL4.GetPoint2dAt(0).Convert3D(0, -1000), DimStyleID);
+                    DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL4.GetPoint3dAt(1), PL4.GetPoint2dAt(0).Convert3D(0, -1000), DimStyleID);
+                    DimPloter.Dim0(db, PL4.GetPoint3dAt(3), PL3.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, 500), DimStyleID);
+                    DimPloter.Dim0(db, PL3.GetPoint3dAt(1), PL4.GetPoint3dAt(2), PL3.GetPoint2dAt(0).Convert3D(0, 500), DimStyleID);
                 }
                 else
                 {
-                    DimPloter.Dim0(db, H1.GetPoint3dAt(0), PL3.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, -500), dsId);
-                    DimPloter.Dim0(db,  PL3.GetPoint3dAt(0), PL1.GetPoint3dAt(0),PL3.GetPoint2dAt(0).Convert3D(0, -500), dsId);
-                    DimPloter.Dim0(db,  PL1.GetPoint3dAt(0),PL1.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, -500), dsId);
-                    DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL3.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, -500), dsId);
-                    DimPloter.Dim0(db,  PL3.GetPoint3dAt(1),H2.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, -500), dsId);
+                    DimPloter.Dim0(db, H1.GetPoint3dAt(0), PL3.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, -500), DimStyleID);
+                    DimPloter.Dim0(db, PL3.GetPoint3dAt(0), PL1.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, -500), DimStyleID);
+                    DimPloter.Dim0(db, PL1.GetPoint3dAt(0), PL1.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, -500), DimStyleID);
+                    DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL3.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, -500), DimStyleID);
+                    DimPloter.Dim0(db, PL3.GetPoint3dAt(1), H2.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, -500), DimStyleID);
                 }
-                DimPloter.Dim0(db, PL3.GetPoint3dAt(0), PL1.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, 500), dsId);
-                DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL3.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, 500), dsId);
-                DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(-0.25 * Sect[0], 100), true,s);
-                DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(+0.25 * Sect[0], 100), false,s);
+                DimPloter.Dim0(db, PL3.GetPoint3dAt(0), PL1.GetPoint3dAt(0), PL3.GetPoint2dAt(0).Convert3D(0, 500), DimStyleID);
+                DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL3.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, 500), DimStyleID);
+                DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(-0.25 * Sect[0], 100), true, s);
+                DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(+0.25 * Sect[0], 100), false, s);
 
                 //-------------------------------------------------------------------------------------------
 
@@ -388,7 +388,7 @@ namespace MyCAD1
         }
 
 
-        private double [] GetSeps()
+        private double[] GetSeps()
         {
             double[] res;
             int numSeg;
@@ -423,14 +423,14 @@ namespace MyCAD1
                 else
                 {
                     // 有残余
-                    numSeg = (int)(Length / SegLength)+1;
+                    numSeg = (int)(Length / SegLength) + 1;
                     res = new double[numSeg];
                     for (int j = 0; j < numSeg; j++)
                     {
                         res[j] = SegLength;
                         if (j == numSeg - 1)
                         {
-                            res[j] =sideLength- deltLength;
+                            res[j] = sideLength - deltLength;
                         }
                         else
                         {
@@ -448,10 +448,10 @@ namespace MyCAD1
                     // 整节段数
                     numSeg = (int)(Length / SegLength);
                     res = new double[numSeg];
-                    for(int j = 0; j < numSeg; j++)
+                    for (int j = 0; j < numSeg; j++)
                     {
                         res[j] = SegLength;
-                        if(j==0)
+                        if (j == 0)
                         {
                             res[j] += deltLength;
                         }
@@ -463,7 +463,7 @@ namespace MyCAD1
                         {
                             continue;
                         }
-                        
+
                     }
                 }
                 else
@@ -475,11 +475,11 @@ namespace MyCAD1
                     {
                         if (j == 0)
                         {
-                            res[j] =sideLength+ deltLength;
+                            res[j] = sideLength + deltLength;
                         }
                         else if (j == numSeg - 1)
                         {
-                            res[j] =sideLength- deltLength;
+                            res[j] = sideLength - deltLength;
                         }
                         else
                         {
@@ -489,17 +489,17 @@ namespace MyCAD1
                 }
             }
             double[] offsetList = new double[res.Length - 1];
-            for(int jj = 0; jj < offsetList.Length; jj++)
+            for (int jj = 0; jj < offsetList.Length; jj++)
             {
                 offsetList[jj] = 0;
-                for(int ii = 0; ii <= jj; ii++)
+                for (int ii = 0; ii <= jj; ii++)
                 {
                     offsetList[jj] += res[ii];
                 }
-                
+
             }
             return offsetList;
-            
+
         }
 
     }
