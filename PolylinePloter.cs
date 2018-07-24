@@ -62,7 +62,14 @@ namespace MyCAD1
             return PL1;
         }
 
-
+        /// <summary>
+        /// 绘制四边形
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="AnchorPoint">四边形中下点</param>
+        /// <param name="Height"></param>
+        /// <param name="Width"></param>
+        /// <returns></returns>
         public static Polyline Plot4(Database db, Point2d AnchorPoint, double Height, double Width)
         {
             Polyline PL1 = new Polyline() { Closed = true };
@@ -114,9 +121,276 @@ namespace MyCAD1
         }
 
 
-        
-          
-       
+
+
+        /// <summary>
+        /// 绘制八字墙立面
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="AnchorPoint">下缘锚点</param>
+        /// <param name="height">总高度=Sect【2】</param>
+        /// <param name="rotAngle">转角，弧度</param>
+        /// <param name="isLeft">左/右</param>
+        /// <returns></returns>
+        public static Polyline PlotWall(Database db, Point2d AnchorPoint,double height, double rotAngle,bool isLeft)
+        {
+            Polyline PL1 = new Polyline() { Closed = true };
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+                int direct= isLeft?-1:1;
+                Point2d p0, p1, p2, p3,p4,p5,p6,p7,p8,p9,p10,p11,p12;
+                p0 = AnchorPoint.Convert2D(0, 0);
+                p1 = AnchorPoint.Convert2D(0, 0);
+                p2 = AnchorPoint.Convert2D(0, 0);
+                p3 = AnchorPoint.Convert2D(0, 0);
+                p4 = AnchorPoint.Convert2D(0, 0);
+                p5 = AnchorPoint.Convert2D(0, 0);
+                p6 = AnchorPoint.Convert2D(0, 0);
+                p7 = AnchorPoint.Convert2D(0, 0);
+                p8 = AnchorPoint.Convert2D(0, 0);
+                p9 = AnchorPoint.Convert2D(0, 0);
+                p10 = AnchorPoint.Convert2D(0, 0);
+                p11 = AnchorPoint.Convert2D(0, 0);
+                p12 = AnchorPoint.Convert2D(0, 0);
+
+                switch (height)
+                {
+                    case 1400:
+                        p1 = p0.Convert2D(direct * 1800, 0);
+                        p2 = p1.Convert2D(0, -400);
+                        p3 = p2.Convert2D(direct * 200);
+                        p4 = p3.Convert2D(0, 400);
+                        p5 = p4.Convert2D(0, 200);
+                        p6 = p5.Convert2D(0, 300);
+                        p7 = p6.Convert2D(-direct * 1800, 1200);
+                        p8 = p7.Convert2D(-direct * 200, 0);
+                        p9 = p8.Convert2D(-direct * 200, 0);
+                        p10 = p9.Convert2D(0,-300);
+                        p11 = p10.Convert2D(direct*200,0);
+                        p12 = p11.Convert2D(0, -height+200);
+                        break;
+                    case 2000:
+                        p1 = p0.Convert2D(direct * 2575, 0);
+                        p2 = p1.Convert2D(0, -400);
+                        p3 = p2.Convert2D(direct * 250);
+                        p4 = p3.Convert2D(0, 400);
+                        p5 = p4.Convert2D(0, 250);
+                        p6 = p5.Convert2D(0, 300);
+                        p7 = p6.Convert2D(-direct * 2625, 1750);
+                        p8 = p7.Convert2D(-direct * 200, 0);
+                        p9 = p8.Convert2D(-direct * 200, 0);
+                        p10 = p9.Convert2D(0, -300);
+                        p11 = p10.Convert2D(direct * 200, 0);
+                        p12 = p11.Convert2D(0, -height + 250);
+                        break;
+                }
+
+                PL1.AddVertexAt(0, p0, 0, 0, 0);
+                PL1.AddVertexAt(1, p1, 0, 0, 0);
+                PL1.AddVertexAt(2, p2, 0, 0, 0);
+                PL1.AddVertexAt(3, p3, 0, 0, 0);
+                PL1.AddVertexAt(4, p4, 0, 0, 0);
+                PL1.AddVertexAt(5, p5, 0, 0, 0);
+                PL1.AddVertexAt(6, p6, 0, 0, 0);
+                PL1.AddVertexAt(7, p7, 0, 0, 0);
+                PL1.AddVertexAt(8, p8, 0, 0, 0);
+                PL1.AddVertexAt(9, p9, 0, 0, 0);
+                PL1.AddVertexAt(10, p10, 0, 0, 0);
+                PL1.AddVertexAt(11, p11, 0, 0, 0);
+                PL1.AddVertexAt(12, p12, 0, 0, 0);
+
+
+                PL1.TransformBy(Matrix3d.Rotation(rotAngle, Vector3d.ZAxis, AnchorPoint.Convert3D()));
+                PL1.Layer = "粗线";
+
+                Line L1, L2;
+                L1 = new Line(PL1.GetPoint3dAt(5), PL1.GetPoint3dAt(12));
+                L2 = new Line(PL1.GetPoint3dAt(8), PL1.GetPoint3dAt(11));
+                L1.Layer = "细线";
+                L2.Layer = "细线";
+
+                modelSpace.AppendEntity(PL1);
+                tr.AddNewlyCreatedDBObject(PL1, true);
+                modelSpace.AppendEntity(L1);
+                tr.AddNewlyCreatedDBObject(L1, true);
+                modelSpace.AppendEntity(L2);
+                tr.AddNewlyCreatedDBObject(L2, true);
+
+
+
+                tr.Commit();
+            }
+            return PL1;
+        }
+
+
+
+
+
+
+        public static Polyline[] PlotWallPlan(Database db, Line[] LSet, double width, bool isLeft)
+        {
+            Polyline PL1 = new Polyline() { Closed = true, Layer = "粗线" };    // 外框
+            Polyline PL2 = new Polyline() { Closed = false, Layer = "粗线" };   // 上拐角
+            Polyline PL3 = new Polyline() { Closed = false, Layer = "粗线" };   // 下拐角
+            Polyline PL4 = new Polyline() { Closed = false, Layer = "粗线" };   // 上内侧
+            Polyline PL5 = new Polyline() { Closed = false, Layer = "粗线" };  // 下内侧
+            Line L1 = new Line() { Layer = "虚线", LinetypeScale = 4.0 };
+            Line L4 = new Line() { Layer = "细线" };  // 上短线
+            Line L5 = new Line() { Layer = "细线" };  // 下短线
+            Line L6 = new Line() { Layer = "粗线" };  // 内墙
+            Line temp;
+            Point3dCollection pts = new Point3dCollection();
+            Point2d UpperPt, LowerPt,UpperPt2,LowerPt2;
+            if (isLeft)
+            {
+                LowerPt = LSet[0].StartPoint.Convert2D();
+                UpperPt = LSet[LSet.Length-1].StartPoint.Convert2D();
+                UpperPt2= LSet[LSet.Length - 2].StartPoint.Convert2D();
+                LowerPt2= LSet[1].StartPoint.Convert2D();
+            }
+            else
+            {
+                UpperPt = LSet[LSet.Length - 1].EndPoint.Convert2D();
+                UpperPt2 = LSet[LSet.Length - 2].EndPoint.Convert2D();
+                LowerPt2 = LSet[1].EndPoint.Convert2D();
+                LowerPt = LSet[0].EndPoint.Convert2D();
+            }          
+
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+                int direct = isLeft ? -1 : 1;
+                double dy = UpperPt.Y - LowerPt.Y;
+                double dy2 = 0;
+                double thick,Wall_width,Wall_thick,Mouth_thick;
+
+                
+                switch (width)
+                {
+                    default:
+                        thick = 300;
+                        Wall_width = 1800;
+                        Wall_thick = 350;
+                        Mouth_thick = 250;
+                        break;
+                    case 1900:
+                        thick = 200;
+                        Wall_width = 1800+200;
+                        Wall_thick = 200;
+                        Mouth_thick = 200;
+                        break;
+                    case 2500:
+                        thick = 200;
+                        Wall_width = 2575+250;
+                        Wall_thick = 250;
+                        Mouth_thick = 250;
+                        break;
+                    case 4700:
+                        thick = 300;
+                        Wall_thick = 350;
+                        Wall_width = 3600;
+                        Mouth_thick = 250;
+                        break;
+
+                }
+                // 外框
+                Point2d p0, p1, p2, p3, p4, p5;
+                dy2 = dy + Wall_width * Math.Tan(30.0 / 180.0 * Math.PI) * 2;
+                p0 = LowerPt;
+                p1 = p0.Convert2D(-direct * thick, 0);
+                p2 = p1.Convert2D(0, dy);
+                p3 = p2.Convert2D(direct * thick, 0);
+                p4 = p3.Convert2D(direct * Wall_width, Wall_width * Math.Tan(30.0 / 180.0 * Math.PI));
+                p5 = p4.Convert2D(0, -dy2);
+                PL1.AddVertexAt(0, p0, 0, 0, 0);
+                PL1.AddVertexAt(1, p1, 0, 0, 0);
+                PL1.AddVertexAt(2, p2, 0, 0, 0);
+                PL1.AddVertexAt(3, p3, 0, 0, 0);
+                PL1.AddVertexAt(4, p4, 0, 0, 0);
+                PL1.AddVertexAt(5, p5, 0, 0, 0);
+                modelSpace.AppendEntity(PL1);
+                tr.AddNewlyCreatedDBObject(PL1, true);
+                
+                //  拐角
+                temp = new Line(PL1.GetPoint3dAt(4), PL1.GetPoint3dAt(5));
+                temp.TransformBy(Matrix3d.Displacement(new Vector3d(-direct * Mouth_thick, 0, 0)));
+                temp.IntersectWith(PL1, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                p0 = PL1.GetPoint2dAt(4);
+                p1 = temp.StartPoint.Convert2D();
+                p2 = pts[0].Convert2D();
+                PL2.AddVertexAt(0, p0, 0, 0, 0);
+                PL2.AddVertexAt(1, p1, 0, 0, 0);
+                PL2.AddVertexAt(2, p2, 0, 0, 0);               
+                modelSpace.AppendEntity(PL2);
+                tr.AddNewlyCreatedDBObject(PL2, true);
+                p0 = PL1.GetPoint2dAt(5);
+                p1 = temp.EndPoint.Convert2D();
+                p2 = pts[1].Convert2D();
+                PL3.AddVertexAt(0, p0, 0, 0, 0);
+                PL3.AddVertexAt(1, p1, 0, 0, 0);
+                PL3.AddVertexAt(2, p2, 0, 0, 0);
+                modelSpace.AppendEntity(PL3);
+                tr.AddNewlyCreatedDBObject(PL3, true);
+                L1.StartPoint = pts[0];
+                L1.EndPoint= pts[1];
+                modelSpace.AppendEntity(L1);
+                tr.AddNewlyCreatedDBObject(L1, true);
+                // 上内墙
+                pts = new Point3dCollection();
+                temp = new Line(PL1.GetPoint3dAt(3), PL1.GetPoint3dAt(4));
+                temp.TransformBy(Matrix3d.Displacement(new Vector3d(0, -Wall_thick / Math.Cos(30.0 / 180.0 * Math.PI), 0)));
+                temp.IntersectWith(LSet[LSet.Length - 2], Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                p0 = UpperPt2;
+                p1 = pts[0].Convert2D();
+                p2 = temp.EndPoint.Convert2D();
+                PL4.AddVertexAt(0, p0, 0, 0, 0);
+                PL4.AddVertexAt(1, p1, 0, 0, 0);
+                PL4.AddVertexAt(2, p2, 0, 0, 0);
+                modelSpace.AppendEntity(PL4);
+                tr.AddNewlyCreatedDBObject(PL4, true);
+
+                pts = new Point3dCollection();
+                temp = new Line(PL1.GetPoint3dAt(0), PL1.GetPoint3dAt(5));
+                temp.TransformBy(Matrix3d.Displacement(new Vector3d(0, Wall_thick / Math.Cos(30.0 / 180.0 * Math.PI), 0)));
+                temp.IntersectWith(LSet[1], Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                p0 = LowerPt2;
+                p1 = pts[0].Convert2D();
+                p2 = temp.EndPoint.Convert2D();
+                PL5.AddVertexAt(0, p0, 0, 0, 0);
+                PL5.AddVertexAt(1, p1, 0, 0, 0);
+                PL5.AddVertexAt(2, p2, 0, 0, 0);
+                modelSpace.AppendEntity(PL5);
+                tr.AddNewlyCreatedDBObject(PL5, true);
+
+                L6.StartPoint = PL1.GetPoint3dAt(3);
+                L6.EndPoint = PL1.GetPoint3dAt(0);
+                modelSpace.AppendEntity(L6);
+                tr.AddNewlyCreatedDBObject(L6, true);
+
+
+                tr.Commit();
+            }
+            Polyline[] res = new Polyline[] { PL1, PL2, PL3, PL4, PL5 };
+            return res;
+        }
+
+
+
+
+
+
+
+
+
 
 
 

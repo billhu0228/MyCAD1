@@ -47,6 +47,64 @@ namespace MyCAD1
         }
 
 
+
+        public static LineAngularDimension2 DimAng(Database db,  Line L1, Line L2, Point3d Pref, ObjectId dimID)
+        {
+            LineAngularDimension2 AD1;
+
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+                AD1 = new LineAngularDimension2(L1.StartPoint, L1.EndPoint, L2.StartPoint, L2.EndPoint, Pref, "", dimID);
+                AD1.Layer = "标注";
+                modelSpace.AppendEntity(AD1);
+                tr.AddNewlyCreatedDBObject(AD1, true);
+
+                tr.Commit();
+            }
+            return AD1;
+        }
+
+
+
+        public static AlignedDimension DimAli(Database db, Point3d P1, Point3d P2, Point3d Pref, ObjectId dimID)
+        {
+            AlignedDimension AD1;
+
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+                AD1 = new AlignedDimension(P1, P2, Pref, "", dimID);
+                AD1.Layer = "标注";
+                modelSpace.AppendEntity(AD1);
+                tr.AddNewlyCreatedDBObject(AD1, true);
+
+                tr.Commit();
+            }
+            return AD1;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// 左右横坡
         /// </summary>

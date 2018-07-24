@@ -212,6 +212,20 @@ namespace MyCAD1
         }
 
 
+        /// <summary>
+        /// 根据多线线段编号获取对应直线
+        /// </summary>
+        /// <param name="thePline"></param>
+        /// <param name="SegID">线段编号</param>
+        /// <returns>对应直线</returns>
+        public static Line GetLine(this Polyline thePline, int SegID)
+        {
+            var seg = thePline.GetLineSegmentAt(SegID);
+            Point3d p1 = seg.StartPoint;
+            Point3d p2 = seg.EndPoint;
+            Line res = new Line(p1, p2);            
+            return res;
+        }
 
 
         public static Line3d Convert3D (this Line2d theL2d)
@@ -231,7 +245,10 @@ namespace MyCAD1
 
 
 
-
+        public static Point2d Convert2D(this Point3d theP3d, double x = 0, double y = 0)
+        {
+            return new Point2d(theP3d.X + x, theP3d.Y + y);
+        }
 
 
         public static Point3d Convert3D(this Point3d theP3d, double x = 0, double y = 0,double z=0)
@@ -244,6 +261,7 @@ namespace MyCAD1
         {
             return new Point3d(theP2d.X + x, theP2d.Y + y,0);
         }
+
         public static Point2d Convert2D(this Point2d theP2d,double x=0,double y=0)
         {
             return new Point2d(theP2d.X + x, theP2d.Y + y);
