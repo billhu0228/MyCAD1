@@ -40,11 +40,21 @@ namespace MyCAD1
                 ed.WriteMessage("\n建模使用默认数据。");
                 TheDalot = new Dalot();
             }
+            Extents2d extA, extB, extC;
 
-            //绘图，成图
-            TheDalot.PlotA(db, Point2d.Origin.Convert2D(0, 0), 100);
-            TheDalot.PlotB(db, Point2d.Origin.Convert2D(0, -20000), 100);
-            TheDalot.PlotC(db, Point2d.Origin.Convert2D(30000, -20000), 75);
+            //绘图
+            extA =TheDalot.PlotA(db, TheDalot.BasePoint, 100);
+            double dAB = extA.MinPoint.Y-TheDalot.BasePoint.Y;
+            dAB -= 1500;//图名
+            dAB -= 1500;//顶标注
+            dAB -= 1500; //H2
+            dAB -= (TheDalot.H2 - TheDalot.H0)*1000;
+            TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), 100);
+            TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(30000, dAB), 75);
+
+
+            // 成图
+            //TheDalot.CreatPaperSpace(db, ed, new int[] { 100, 100, 75 });
 
 
 
@@ -65,8 +75,8 @@ namespace MyCAD1
             string xpath = "";
             WFM.OpenFileDialog dialog = new WFM.OpenFileDialog();
             dialog.InitialDirectory = "G:\\涵洞自动成图程序";
-            dialog.Filter = "ext files (*.xls)|*.xls|All files(*.*)|*>**";
-            dialog.FilterIndex = 1;
+            //dialog.Filter = "ext files (*.xls)|*.xls|All files(*.*)|*>**";
+            //dialog.FilterIndex = 2;
             dialog.RestoreDirectory = true;
             if (dialog.ShowDialog() == WFM.DialogResult.OK)
             {

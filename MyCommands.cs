@@ -17,6 +17,100 @@ namespace MyCAD1
 {
     public class MyCommands
     {
+
+        [CommandMethod("OBL", CommandFlags.UsePickSet)]
+        public static void ObjectsByLayer()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            var ed = doc.Editor;
+
+
+            // Select the objects to sort
+
+
+
+            var psr = ed.GetSelection();
+            if (psr.Status != PromptStatus.OK)
+                return;
+
+
+
+            // We'll sort them based on a string value (the layer name)
+
+
+
+            var map = new Dictionary<ObjectId, string>();
+            foreach (dynamic id in psr.Value.GetObjectIds())
+            {
+                map.Add(id, id.Layer);
+            }
+
+
+            var sorted = map.OrderBy(kv => kv.Value);
+
+
+
+            // Print them in order to the command-line
+
+
+
+            foreach (var item in sorted)
+            {
+                ed.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
+            }
+        }
+
+
+
+
+
+
+        public static void CADRead(string filename)
+        {
+            Document doc = Application.DocumentManager.Open(filename, false);
+            Database db = doc.Database;
+            var CurEditor = doc.Editor;
+            double f = 1.0;
+            PromptSelectionOptions pso = new PromptSelectionOptions();
+            pso.MessageForAdding = "\nSelect annotative objects";
+            var psr = CurEditor.GetSelection(pso);
+
+            if (psr.Status != PromptStatus.OK)
+            {
+                return;
+            }
+            var map = new Dictionary<ObjectId, string>();
+
+            foreach (dynamic id in psr.Value.GetObjectIds())
+            {
+                map.Add(id, id.Layer);
+            }
+
+            var sorted = map.OrderBy(kv => kv.Value);
+
+            // Print them in order to the command-line
+
+
+            foreach (var item in sorted)
+            {
+                CurEditor.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
+            }
+
+
+            doc.CloseAndDiscard();
+        }
+
+
+
+
+
+
+
+
+
+
+
         //-------------------------------------------------------------------------------------------
         [CommandMethod("ini")]
         public static void CADini()

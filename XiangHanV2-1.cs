@@ -502,7 +502,7 @@ namespace MyCAD1
                 tr.Commit();
             }
             Draw2(res);
-            Commands.CreateLayout(Gy0);
+           // Commands.CreateLayout(Gy0);
         }
         //-------------------------------------------------------------------------------------------
         // END

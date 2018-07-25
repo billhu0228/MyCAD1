@@ -5,7 +5,7 @@ using Autodesk.AutoCAD.Runtime;
 using System;
 
 [assembly: CommandClass(typeof(MyCAD1.Extensions))]
-[assembly: CommandClass(typeof(MyCAD1.Commands))]
+
 
 
 namespace MyCAD1
@@ -274,25 +274,22 @@ namespace MyCAD1
         /// </summary>
         /// <param name="vpNum">1=平面，2=剖面.</param>        
         /// <param name="ytop">1=平面，2=剖面.</param> 
-        public static void DrawMyViewport(this Viewport vp, int vpNum,double ytop)
+        public static void DrawMyViewport(this Viewport vp, int vpNum,Point3d BasePoint,Point2d CenterPoint,int scale)
         {
             if (vpNum == 1)
             {
-                vp.CenterPoint = new Point3d(150,148.5,0);
+                vp.CenterPoint = BasePoint.Convert3D(150, 148.5);
                 vp.Width = 240;
                 vp.Height = 277;                
-                vp.ViewCenter = new Point2d(0, ytop+1000-13850);                
-                vp.StandardScale = StandardScaleType.Scale1To100;
             }
             else if (vpNum==2)
             {
-                vp.CenterPoint = new Point3d(340, 148.5, 0);
+                vp.CenterPoint = BasePoint.Convert3D(340, 148.5, 0);
                 vp.Width = 140;
                 vp.Height = 277;
-                vp.ViewCenter = new Point2d(25000, -10000);
-                vp.CustomScale = 1.0 / 75.0;
-                //vp.StandardScale = StandardScaleType.Scale1To100;
             }
+            vp.ViewCenter = CenterPoint;
+            vp.CustomScale = 1.0 / scale;
             vp.Layer = "图框";
         }
 
@@ -332,84 +329,84 @@ namespace MyCAD1
 
 
 
-    public class Commands
-    {
-        [CommandMethod("goo")]
-        public static void CreateLayout(double ytop)
-        {
-            var doc = Application.DocumentManager.MdiActiveDocument;
+    //public class Commands
+   // {
+        //[CommandMethod("goo")]
+        //public static void CreateLayout(double ytop)
+        //{
+        //    var doc = Application.DocumentManager.MdiActiveDocument;
 
-            if (doc == null)
-                return;
-            var db = doc.Database;
-            var ed = doc.Editor;
-            var ext = new Extents2d();
-            using (var tr = db.TransactionManager.StartTransaction())
-            {
-                // Create and select a new layout tab
-                var id = LayoutManager.Current.CreateAndMakeLayoutCurrent("1-1");
-                // Open the created layout
-                var lay = (Layout)tr.GetObject(id, OpenMode.ForWrite);
+        //    if (doc == null)
+        //        return;
+        //    var db = doc.Database;
+        //    var ed = doc.Editor;
+        //    var ext = new Extents2d();
+        //    using (var tr = db.TransactionManager.StartTransaction())
+        //    {
+        //        // Create and select a new layout tab
+        //        var id = LayoutManager.Current.CreateAndMakeLayoutCurrent("1-1");
+        //        // Open the created layout
+        //        var lay = (Layout)tr.GetObject(id, OpenMode.ForWrite);
 
-                // Make some settings on the layout and get its extents
-                lay.SetPlotSettings("A3", "monochrome.ctb", "Adobe PDF");
-                ext = lay.GetMaximumExtents();
-                lay.ApplyToViewport(tr, 2,
-                    vp => 
-                    {
-                        vp.DrawMyViewport(1,ytop);
-                        //vp.ResizeViewport(ext, 0.8);
-                        vp.Locked = true;
-                    }
-                    );
-                lay.ApplyToViewport(tr, 3,    
-                    vp =>  {
-                        vp.DrawMyViewport(2,ytop);
-                        vp.Locked = true;
-                    }
-                    );
-                //-----------------------------------------------------------------------------
-                var blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                var ps = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
-                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForWrite) as TextStyleTable;
+        //        // Make some settings on the layout and get its extents
+        //        lay.SetPlotSettings("A3", "monochrome.ctb", "Adobe PDF");
+        //        ext = lay.GetMaximumExtents();
+        //        lay.ApplyToViewport(tr, 2,
+        //            vp => 
+        //            {
+        //                vp.DrawMyViewport(1,ytop);
+        //                //vp.ResizeViewport(ext, 0.8);
+        //                vp.Locked = true;
+        //            }
+        //            );
+        //        lay.ApplyToViewport(tr, 3,    
+        //            vp =>  {
+        //                vp.DrawMyViewport(2,ytop);
+        //                vp.Locked = true;
+        //            }
+        //            );
+        //        //-----------------------------------------------------------------------------
+        //        var blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+        //        var ps = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
+        //        TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForWrite) as TextStyleTable;
 
-                Point2d p0 = new Point2d(0, 0);
-                Point2d p1 = HanDong.Convert2d(p0, 420, 0);
-                Point2d p2 = HanDong.Convert2d(p1, 0,297);
-                Point2d p3 = HanDong.Convert2d(p2,-420,0);
-                Polyline PL1 = new Polyline();
-                PL1.AddVertexAt(0, p0, 0, 0, 0);
-                PL1.AddVertexAt(1, p1, 0, 0, 0);
-                PL1.AddVertexAt(2, p2, 0, 0, 0);
-                PL1.AddVertexAt(3, p3, 0, 0, 0);
-                PL1.Layer = "图框";
-                PL1.Closed = true;
-                ps.AppendEntity(PL1);
-                tr.AddNewlyCreatedDBObject(PL1, true);
-                p0 = new Point2d(30, 10);
-                p1 = HanDong.Convert2d(p0,420-40,0);
-                p2 = HanDong.Convert2d(p1, 0,297-20);
-                p3= HanDong.Convert2d(p0, 0, 297 - 20);
-                Polyline PL2 = new Polyline();
-                PL2.AddVertexAt(0, p0, 0, 0, 0);
-                PL2.AddVertexAt(1, p1, 0, 0, 0);
-                PL2.AddVertexAt(2, p2, 0, 0, 0);
-                PL2.AddVertexAt(3, p3, 0, 0, 0);
-                PL2.Layer = "图框";
-                PL2.ColorIndex = 1;
-                PL2.Closed = true;
-                ps.AppendEntity(PL2);
-                tr.AddNewlyCreatedDBObject(PL2, true);               
+        //        Point2d p0 = new Point2d(0, 0);
+        //        Point2d p1 = HanDong.Convert2d(p0, 420, 0);
+        //        Point2d p2 = HanDong.Convert2d(p1, 0,297);
+        //        Point2d p3 = HanDong.Convert2d(p2,-420,0);
+        //        Polyline PL1 = new Polyline();
+        //        PL1.AddVertexAt(0, p0, 0, 0, 0);
+        //        PL1.AddVertexAt(1, p1, 0, 0, 0);
+        //        PL1.AddVertexAt(2, p2, 0, 0, 0);
+        //        PL1.AddVertexAt(3, p3, 0, 0, 0);
+        //        PL1.Layer = "图框";
+        //        PL1.Closed = true;
+        //        ps.AppendEntity(PL1);
+        //        tr.AddNewlyCreatedDBObject(PL1, true);
+        //        p0 = new Point2d(30, 10);
+        //        p1 = HanDong.Convert2d(p0,420-40,0);
+        //        p2 = HanDong.Convert2d(p1, 0,297-20);
+        //        p3= HanDong.Convert2d(p0, 0, 297 - 20);
+        //        Polyline PL2 = new Polyline();
+        //        PL2.AddVertexAt(0, p0, 0, 0, 0);
+        //        PL2.AddVertexAt(1, p1, 0, 0, 0);
+        //        PL2.AddVertexAt(2, p2, 0, 0, 0);
+        //        PL2.AddVertexAt(3, p3, 0, 0, 0);
+        //        PL2.Layer = "图框";
+        //        PL2.ColorIndex = 1;
+        //        PL2.Closed = true;
+        //        ps.AppendEntity(PL2);
+        //        tr.AddNewlyCreatedDBObject(PL2, true);               
 
-                tr.Commit();
-            }
+        //        tr.Commit();
+        //    }
             
-            // Zoom so that we can see our new layout, again with a little padding
+        //    // Zoom so that we can see our new layout, again with a little padding
 
-            ed.Command("_.ZOOM", "_E");
-            ed.Command("_.ZOOM", ".7X");
-            ed.Regen();
-        }
+        //    ed.Command("_.ZOOM", "_E");
+        //    ed.Command("_.ZOOM", ".7X");
+        //    ed.Regen();
+        //}
 
 
 
@@ -423,10 +420,10 @@ namespace MyCAD1
 
 
 
-        private bool ValidDbExtents(Point3d min, Point3d max)
-        {
-            return
-              !(min.X > 0 && min.Y > 0 && min.Z > 0 && max.X < 0 && max.Y < 0 && max.Z < 0);
-        }
-    }
+  //      private bool ValidDbExtents(Point3d min, Point3d max)
+       // {
+     //       return
+   //           !(min.X > 0 && min.Y > 0 && min.Z > 0 && max.X < 0 && max.Y < 0 && max.Z < 0);
+     //   }
+   // }
 }

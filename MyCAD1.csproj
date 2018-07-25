@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="CADini.cs" />
     <Compile Include="DimPloter.cs" />
+    <Compile Include="TextPloter.cs" />
     <Compile Include="HatchPloter.cs" />
     <Compile Include="MultilinePloter.cs" />
     <Compile Include="PolylinePloter.cs" />
