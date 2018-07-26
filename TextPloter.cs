@@ -15,6 +15,190 @@ namespace MyCAD1
 {
     class TextPloter
     {
+
+        public static void PrintLineText(Database db,Point2d StartPoint, Point2d EndPoint,string[] textList,bool isLeft=true,double scale = 100)
+        {
+            int number = textList.Count();
+            double wdh = 2.5;
+            double WdWidth=1.25;
+            double LineWidth=0;
+
+            foreach(string cnt in textList)
+            {
+                double w = WdWidth * cnt.Length * scale;
+                if (w > LineWidth) { LineWidth = w; }
+            }
+            Line L1=new Line();
+            double xdir = isLeft ? -1 : 1;
+            double ydir;
+            if (EndPoint.Y > StartPoint.Y)
+            {
+                L1 = new Line(StartPoint.Convert3D(), EndPoint.Convert3D(0,+wdh*scale*(number-1)));
+                ydir = 1;
+            }
+            else
+            {
+                L1 = new Line(StartPoint.Convert3D(), EndPoint.Convert3D(0, -wdh * scale * (number - 1)));
+                ydir = -1;
+            }
+            L1.Layer = "标注";
+
+            Line side = new Line();
+            DBText txt=new DBText();
+            int i = 0;
+
+
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+                modelSpace.AppendEntity(L1);
+                tr.AddNewlyCreatedDBObject(L1, true);
+                foreach (string cnt in textList)
+                {
+                    side = new Line(EndPoint.Convert3D(0, i * wdh * scale * ydir), EndPoint.Convert3D(xdir * LineWidth, i * wdh * scale * ydir));
+                    side.Layer = "标注";
+                    txt.Layer = "标注";
+                    txt.TextStyleId = st["fsdb"];                    
+                    txt.WidthFactor = 0.75;
+                    txt.Position = side.StartPoint;
+                    txt.HorizontalMode = isLeft ? TextHorizontalMode.TextRight : TextHorizontalMode.TextLeft;
+                    txt.AlignmentPoint = side.StartPoint;
+                    txt.TextString = cnt;
+                    txt.Height = wdh * scale;
+                    modelSpace.AppendEntity(txt);
+                    tr.AddNewlyCreatedDBObject(txt, true);
+                    modelSpace.AppendEntity(side);
+                    tr.AddNewlyCreatedDBObject(side, true);                    
+                }
+                tr.Commit();
+            }
+        }
+
+
+
+
+        public static void PrintCirText(Database db, int textstring,  Point2d PositionPoint, double scale = 100)
+        {
+            DBText txt = new DBText();
+            Circle C1 = new Circle();            
+            Circle C2 = new Circle();
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+
+                txt.TextString = textstring.ToString();
+                txt.Height = 2 * scale;
+                txt.Position = PositionPoint.Convert3D();
+                txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                txt.VerticalMode = TextVerticalMode.TextVerticalMid;
+                txt.AlignmentPoint = PositionPoint.Convert3D();
+                txt.TextStyleId = st["fsdb"];
+                txt.Layer = "标注";
+                txt.WidthFactor = 0.75;
+
+                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.3 * scale);
+                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.6 * scale);
+                C1.Layer = "标注";
+                C2.Layer = "标注";
+                modelSpace.AppendEntity(txt);
+                tr.AddNewlyCreatedDBObject(txt, true);
+                modelSpace.AppendEntity(C1);
+                tr.AddNewlyCreatedDBObject(C1, true);
+                modelSpace.AppendEntity(C2);
+                tr.AddNewlyCreatedDBObject(C2, true);
+                tr.Commit();
+            }
+            return;
+        }
+
+        public static void PrintCirText(Database db, int textstring, Point2d PositionPoint,Point2d startP,Point2d endP, double scale = 100)
+        {
+            DBText txt = new DBText();
+            Circle C1 = new Circle();
+            Circle C2 = new Circle();
+            Line L1, L2;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+
+                txt.TextString = textstring.ToString();
+                txt.Height = 2 * scale;
+                txt.Position = PositionPoint.Convert3D();
+                txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                txt.VerticalMode = TextVerticalMode.TextVerticalMid;
+                txt.AlignmentPoint = PositionPoint.Convert3D();
+                txt.TextStyleId = st["fsdb"];
+                txt.Layer = "标注";
+                txt.WidthFactor = 0.75;
+
+                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.3 * scale);
+                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.6 * scale);
+                C1.Layer = "标注";
+                C2.Layer = "标注";
+
+                L1 = new Line(PositionPoint.Convert3D(0, 1.5 * scale), endP.Convert3D());
+                L2 = new Line(PositionPoint.Convert3D(0, -1.5 * scale), startP.Convert3D());
+                L1.Layer = "标注";
+                L2.Layer = "标注";
+
+                modelSpace.AppendEntity(txt);
+                tr.AddNewlyCreatedDBObject(txt, true);
+                modelSpace.AppendEntity(C1);
+                tr.AddNewlyCreatedDBObject(C1, true);
+                modelSpace.AppendEntity(C2);
+                tr.AddNewlyCreatedDBObject(C2, true);
+                modelSpace.AppendEntity(L1);
+                tr.AddNewlyCreatedDBObject(L1, true);
+                modelSpace.AppendEntity(L2);
+                tr.AddNewlyCreatedDBObject(L2, true);
+                tr.Commit();
+            }
+            return;
+        }
+
+
+
+        public static void PrintText(Database db, string textstring,double H, Point2d PositionPoint, double scale = 100)
+        {
+            DBText txt=new DBText();
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+                txt.TextString = textstring;
+                txt.Height = H * scale;
+                txt.Position = PositionPoint.Convert3D();
+                txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                txt.VerticalMode = TextVerticalMode.TextBottom;
+                txt.AlignmentPoint = PositionPoint.Convert3D(0, 0.5 * scale);
+                txt.TextStyleId = st["fsdb"];
+                txt.Layer = "标注";
+                txt.WidthFactor = 0.75;
+
+
+                modelSpace.AppendEntity(txt);
+                tr.AddNewlyCreatedDBObject(txt, true);
+                tr.Commit();
+            }
+            return;
+        }
+
         public static void PrintTitle(Database db,string textstring,Point2d PositionPoint ,double scale= 100)
         {
 

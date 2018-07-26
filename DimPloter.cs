@@ -94,11 +94,50 @@ namespace MyCAD1
 
 
 
+        /// <summary>
+        /// 绘制标高符号
+        /// </summary>
+        /// <param name="bgdata">标高数据</param>
+        /// <param name="refpt">标高点</param>
+        /// <param name="ms"></param>
+        /// <param name="tr"></param>
+        /// <param name="blockTbl"></param>
+        /// <param name="s"></param>
 
 
 
+        public static void BiaoGao(double bgdata, Point3d refpt, BlockTableRecord ms, Transaction tr, BlockTable blockTbl, double s = 100)
+        {
+            ObjectId blkRecId = blockTbl["BG"];
+            double factor = s / 100;
+            using (BlockReference acBlkRef = new BlockReference(refpt, blkRecId))
+            {
+                //acBlkRef.SetAttributes();
+                acBlkRef.ScaleFactors = new Scale3d(factor);
+                ms.AppendEntity(acBlkRef);
+                tr.AddNewlyCreatedDBObject(acBlkRef, true);
+                BlockTableRecord zheshiyuankuai;
+                zheshiyuankuai = tr.GetObject(blkRecId, OpenMode.ForRead) as BlockTableRecord;
+                foreach (ObjectId gezhongshuxingID in zheshiyuankuai)
+                {
+                    DBObject gezhongshuxing = tr.GetObject(gezhongshuxingID, OpenMode.ForRead) as DBObject;
+                    if (gezhongshuxing is AttributeDefinition)
+                    {
+                        AttributeDefinition acAtt = gezhongshuxing as AttributeDefinition;
+                        using (AttributeReference acAttRef = new AttributeReference())
+                        {
+                            acAttRef.SetAttributeFromBlock(acAtt, acBlkRef.BlockTransform);
+                            acAttRef.Position = acAtt.Position.TransformBy(acBlkRef.BlockTransform);
+                            acAttRef.TextString = String.Format("{0:f2}", bgdata);
+                            //acAttRef.Height = acAttRef.Height * factor;
+                            acBlkRef.AttributeCollection.AppendAttribute(acAttRef);
 
-
+                            tr.AddNewlyCreatedDBObject(acAttRef, true);
+                        }
+                    }
+                }
+            }
+        }
 
 
 

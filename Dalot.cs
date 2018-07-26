@@ -147,7 +147,7 @@ namespace MyCAD1
             Point2d BB = AnchorPoint;
             Point3dCollection pts = new Point3dCollection();  // 交点获取
             double ang_in_rad = Ang / 180 * Math.PI;
-            Line[] LSets;
+            Line[] LSets=new Line[4];
             Polyline[] LeftPolylineSet, RightPolylineSet;
             Extents2d CurExt;
             Point2d minPoint = BasePoint, maxPoint= BasePoint;
@@ -180,6 +180,8 @@ namespace MyCAD1
                     DimPloter.Dim0(db, LeftPolylineSet[4].GetPoint3dAt(1), LeftPolylineSet[0].GetPoint3dAt(0),
                         LeftPolylineSet[0].GetPoint3dAt(0).Convert3D(-15*s, 0), DimStyleID, 120.0 / 180.0 * Math.PI);
                     minPoint = minPoint.Convert2D(LeftPolylineSet[0].GetPoint2dAt(5).X,LSets[0].StartPoint.Y-20*s);
+                    TextPloter.PrintCirText(db, 25, LeftPolylineSet[0].GetPoint2dAt(0).Convert2D(-10 * s, 0.25 * Sect[0]), s);
+                    
                 }
                 if (Avale == AType.BZQ)
                 {
@@ -193,6 +195,7 @@ namespace MyCAD1
                     DimPloter.Dim0(db, RightPolylineSet[4].GetPoint3dAt(1), RightPolylineSet[0].GetPoint3dAt(0),
                         RightPolylineSet[0].GetPoint3dAt(0).Convert3D(1500, 0), DimStyleID, -120.0 / 180.0 * Math.PI);
                     maxPoint = RightPolylineSet[0].GetPoint2dAt(4).Convert2D(10*s, 20*s);
+                    TextPloter.PrintCirText(db, 25, RightPolylineSet[0].GetPoint2dAt(0).Convert2D(10 * s, 0.25 * Sect[0]), s);
                 }               
 
                 DimPloter.Dim0(db, LSets[0].StartPoint, LSets[1].StartPoint, LSets[0].StartPoint.Convert3D(15*s, 0), DimStyleID, 0.5 * Math.PI + ang_in_rad);
@@ -223,9 +226,11 @@ namespace MyCAD1
 
             }
 
+            //
+            TextPloter.PrintCirText(db, (int)Sect[4] / 10, AnchorPoint.Convert2D(0.5 * SegLength, -0.2 * Sect[1]), 
+                LSets[1].StartPoint.Convert2D(), LSets[LSets.Length - 2].EndPoint.Convert2D());
 
-
-
+            TextPloter.PrintLineText(db, AnchorPoint, AnchorPoint.Convert2D(-10 * s, -17.3 * s), new string[] { Pk_string(), }, true,s);
             tr.Commit();
             tr.Dispose();
             CurExt = new Extents2d(minPoint, maxPoint);
@@ -255,7 +260,7 @@ namespace MyCAD1
             var DimStyleID = dst["1-" + s.ToString()];
             Point2d BB = AnchorPoint;
             Point3dCollection pts = new Point3dCollection();  // 交点获取
-            Line[] LSets;
+            Line[] LSets=new Line[4];
             Polyline Wall_left=new Polyline(), Wall_right=new Polyline();
             double slop_rad = Math.Atan(Slop);
             Polyline Road;
@@ -335,8 +340,8 @@ namespace MyCAD1
                 // 对齐标注
                 DimPloter.DimAli(db, LSets[3].StartPoint, LSets[3].EndPoint, LSets[3].EndPoint.Convert3D(0, 500), DimStyleID);
                 
-                BiaoGao(H0 + (LSets[1].StartPoint.Y - AnchorPoint.Y) / 1000, LSets[1].StartPoint, modelSpace, tr, blockTbl, s);
-                BiaoGao(H0 + (LSets[1].EndPoint.Y - AnchorPoint.Y) / 1000, LSets[1].EndPoint, modelSpace, tr, blockTbl, s);
+                DimPloter.BiaoGao(H0 + (LSets[1].StartPoint.Y - AnchorPoint.Y) / 1000, LSets[1].StartPoint, modelSpace, tr, blockTbl, s);
+                DimPloter.BiaoGao(H0 + (LSets[1].EndPoint.Y - AnchorPoint.Y) / 1000, LSets[1].EndPoint, modelSpace, tr, blockTbl, s);
 
 
 
@@ -357,6 +362,7 @@ namespace MyCAD1
 
             }
 
+            // 绘制帽子
 
             p0 = AnchorPoint.Convert2D(-W1 - delt1 / 2 * 3, 0);
             p1 = AnchorPoint.Convert2D(-W1, delt1);
@@ -365,10 +371,30 @@ namespace MyCAD1
             p4 = AnchorPoint.Convert2D(W2 + delt3 / 2 * 3, 0);
             Road = PolylinePloter.PlotN(db, new Point2d[] { p0, p1, p2, p3, p4 }, false);
             Road.Layer = "细线";
-            BiaoGao(H1, p1.Convert3D(), modelSpace, tr, blockTbl,s);
-            BiaoGao(H2, p2.Convert3D(), modelSpace, tr, blockTbl,s);
-            BiaoGao(H3, p3.Convert3D(), modelSpace, tr, blockTbl, s);
-            BiaoGao(H0, AnchorPoint.Convert3D(), modelSpace, tr, blockTbl, s);
+            pts = new Point3dCollection();
+            Road.GetLine(0).IntersectWith(LSets[LSets.Length - 1], Intersect.ExtendThis, pts, IntPtr.Zero, IntPtr.Zero);            
+            if (pts.Count == 0) { }
+            else{ Road.SetPointAt(0, pts[0].Convert2D()); }
+            pts = new Point3dCollection();
+            Road.GetLine(3).IntersectWith(LSets[LSets.Length - 1], Intersect.ExtendThis, pts, IntPtr.Zero, IntPtr.Zero);
+            if (pts.Count == 0) { }
+            else { Road.SetPointAt(4,pts[0].Convert2D()); }
+
+            // 绘制垫层
+
+
+            //TextPloter.PrintLineText(db, AnchorPoint);
+
+
+
+
+
+            DimPloter.BiaoGao(H1, p1.Convert3D(), modelSpace, tr, blockTbl,s);
+            DimPloter.BiaoGao(H2, p2.Convert3D(), modelSpace, tr, blockTbl,s);
+            DimPloter.BiaoGao(H3, p3.Convert3D(), modelSpace, tr, blockTbl, s);
+            DimPloter.BiaoGao(H0, AnchorPoint.Convert3D(), modelSpace, tr, blockTbl, s);
+            DimPloter.BiaoGao((Wall_left.GetPoint2dAt(5).Y-AnchorPoint.Y)/1000+H0, Wall_left.GetPoint2dAt(5).Convert3D(), modelSpace, tr, blockTbl, s);
+            DimPloter.BiaoGao((Wall_right.GetPoint2dAt(5).Y - AnchorPoint.Y) / 1000 + H0, Wall_right.GetPoint2dAt(5).Convert3D(), modelSpace, tr, blockTbl, s);
 
             DimPloter.Dim0(db, Wall_left.GetPoint3dAt(5), Wall_left.GetPoint3dAt(12), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
             DimPloter.Dim0(db,  Wall_left.GetPoint3dAt(12),Road.GetPoint3dAt(1), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
@@ -376,9 +402,17 @@ namespace MyCAD1
             DimPloter.Dim0(db, Road.GetPoint3dAt(2), Road.GetPoint3dAt(3), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
             DimPloter.Dim0(db, Road.GetPoint3dAt(3), Wall_right.GetPoint3dAt(12), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
             DimPloter.Dim0(db, Wall_right.GetPoint3dAt(12),Wall_right.GetPoint3dAt(5), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
+            DimPloter.DimAng(db, Wall_left.GetLine(6), Wall_left.GetLine(11), Wall_left.GetPoint3dAt(7).Convert3D(0, -10*s),DimStyleID);
+            DimPloter.DimAng(db, Wall_right.GetLine(6), Wall_right.GetLine(11), Wall_right.GetPoint3dAt(7).Convert3D(0, -10*s), DimStyleID);
+            TextPloter.PrintText(db, "入口", 3, Wall_left.GetPoint2dAt(6).Convert2D(0, 10 * s), s);
+            TextPloter.PrintText(db, "出口", 3, Wall_right.GetPoint2dAt(6).Convert2D(0, 10 * s), s);
+            TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_left.GetPoint2dAt(0).Convert2D(-10 * s, 10 * s), s);
+            TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_right.GetPoint2dAt(0).Convert2D(10 * s, 10 * s), s);
+            TextPloter.PrintCirText(db, (int)Sect[5] / 10, AnchorPoint.Convert2D(-0.5*SegLength, 0.5*Sect[2]),
+                LSets[1].StartPoint.Convert2D(),LSets[LSets.Length-2].EndPoint.Convert2D(), s);
 
             TextPloter.PrintTitle(db, "A-A剖面", AnchorPoint.Convert2D(0, delt2 + 20 * s),s);
-
+            
 
             tr.Commit();
             tr.Dispose();
@@ -639,38 +673,7 @@ namespace MyCAD1
         }
 
 
-        private static void BiaoGao(double bgdata, Point3d refpt, BlockTableRecord ms, Transaction tr, BlockTable blockTbl,double s=100)
-        {
-            ObjectId blkRecId = blockTbl["BG"];
-            double factor = s / 100;
-            using (BlockReference acBlkRef = new BlockReference(refpt, blkRecId))
-            {
-                //acBlkRef.SetAttributes();
-                acBlkRef.ScaleFactors = new Scale3d(factor);
-                ms.AppendEntity(acBlkRef);
-                tr.AddNewlyCreatedDBObject(acBlkRef, true);
-                BlockTableRecord zheshiyuankuai;
-                zheshiyuankuai = tr.GetObject(blkRecId, OpenMode.ForRead) as BlockTableRecord;
-                foreach (ObjectId gezhongshuxingID in zheshiyuankuai)
-                {
-                    DBObject gezhongshuxing = tr.GetObject(gezhongshuxingID, OpenMode.ForRead) as DBObject;
-                    if (gezhongshuxing is AttributeDefinition)
-                    {
-                        AttributeDefinition acAtt = gezhongshuxing as AttributeDefinition;
-                        using (AttributeReference acAttRef = new AttributeReference())
-                        {
-                            acAttRef.SetAttributeFromBlock(acAtt, acBlkRef.BlockTransform);
-                            acAttRef.Position = acAtt.Position.TransformBy(acBlkRef.BlockTransform);
-                            acAttRef.TextString = String.Format("{0:f2}", bgdata);
-                            //acAttRef.Height = acAttRef.Height * factor;
-                            acBlkRef.AttributeCollection.AppendAttribute(acAttRef);
 
-                            tr.AddNewlyCreatedDBObject(acAttRef, true);
-                        }
-                    }
-                }
-            }
-        }
 
         public void CreatPaperSpace(Database db,Editor ed, int[] ScaleList )
         {
@@ -699,6 +702,16 @@ namespace MyCAD1
             ed.Command("_.ZOOM", "_E");
             ed.Command("_.ZOOM", ".7X");
             ed.Regen();
+        }
+
+        public string Pk_string()
+        {
+            string res;
+            int kilo=(int)Pk / 1000;
+            double meter = Pk % 1000;
+            res = string.Format("PK{0}+{1:0.000}", kilo, meter);
+
+            return res;
         }
 
     }
