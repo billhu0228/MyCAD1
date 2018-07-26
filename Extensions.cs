@@ -85,11 +85,19 @@ namespace MyCAD1
         /// </summary>
         /// <param name="aline">目标线.</param>       
         
-        public static Point3d GetMidPoint3d(this Line aline)
+        public static Point3d GetMidPoint3d(this Line aline,double xx=0,double yy=0)
         {
             double x = 0.5 * (aline.StartPoint.X + aline.EndPoint.X);
             double y = 0.5 * (aline.StartPoint.Y + aline.EndPoint.Y);
-            return new Point3d(x, y, 0);
+            return new Point3d(x+xx, y+yy, 0);
+        }
+
+
+        public static Point2d GetMidPoint2d(this Line aline, double xx = 0, double yy = 0)
+        {
+            double x = 0.5 * (aline.StartPoint.X + aline.EndPoint.X);
+            double y = 0.5 * (aline.StartPoint.Y + aline.EndPoint.Y);
+            return new Point2d(x+xx, y+yy);
         }
 
         /// <summary>

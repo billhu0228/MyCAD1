@@ -14,12 +14,11 @@ using System.Threading.Tasks;
 
 namespace MyCAD1
 {
+    public enum AType { BZQ, JSJ, None, Other };
+    public enum DType { A, B, C, D, E, F, G, H, I, J, K, L }
 
-
-    class Dalot
+    public class Dalot
     {
-        public enum AType { BZQ, JSJ, None, Other };
-        public enum DType { A, B, C, D, E, F, G, H, I, J, K, L }
         public double Pk;
         public double Ang, Slop;
         public double Length, SegLength;
@@ -80,53 +79,53 @@ namespace MyCAD1
 
         }
 
-        //public Dalot(string strFileName)
-        //{
-        //    Document doc = Application.DocumentManager.MdiActiveDocument;
-        //    Editor ed = doc.Editor;
-        //    object missing = System.Reflection.Missing.Value;
-        //    List<string> colnames = new List<string>() { "No.", "H1", "H2", "H3", "t1", "t2", "t3", "f1", "f2",
-        //        "f3", "f4", "s1", "a1", "Length", "numSeg", "SegL", "Ang", "Slop", "ShoulderH", "ShoulderW",
-        //        "Pad0Des", "Pad0W", "Pad0H", "Pad1Des", "Pad1W", "Pad1H", "WallWidth", "WallT", "cutTop", "cutBot",
-        //        "WA1", "WA2", "WA3", "WA4", "RefillS", "RefillDes", "RefillSep", "MouthT","BG0","BG1","BG2","BG3","RW0","RW1" };
-        //    MOE.Application excel = new MOE.Application
-        //    {
-        //        Visible = false,
-        //        UserControl = true
-        //    };
-        //    MOE.Workbook wb = excel.Application.Workbooks.Open(strFileName, missing, true, missing, missing, missing,
-        //        missing, missing, missing, true, missing, missing, missing, missing, missing);
-        //    MOE.Worksheet ws = new MOE.Worksheet();
-        //    for (int i = 1; i <= wb.Worksheets.Count; i++)
-        //    {
-        //        if (wb.Worksheets[i].Name=="Parameters")
-        //        {
-        //            ws = (MOE.Worksheet)wb.Worksheets[i];
-        //            break;
-        //        }
-        //        else
-        //        {
-        //            ed.WriteMessage("Bad");
-        //            return;
-        //        }
-        //    }
-        //    MOE.Range rgUsed = ws.UsedRange;
-        //    MOE.Range rgFound;
-        //    int iRowNum = 2;
+        public Dalot(double cPk,double cAng,double cSlop,double cLength,double cSegLength,double cXMidDist,
+            DType cDalotType, AType cAmont,AType cAvale,Point2d cBasePoint,int cLayerNum,
+            double cH1 = 22.89, double cH2 = 22.83, double cH3 = 22.70, double cH0 = 19.30, double cW1 = 5000, double cW2 = 5000)
+        {
+            Pk = cPk;
+            Ang = cAng;
+            Slop = cSlop;
+            DalotType = cDalotType;
+            Length = cLength;
+            SegLength = cSegLength;
+            XMidDist = cXMidDist;
+            Amont = cAmont;
+            Avale = cAvale;
+            LayerNum = cLayerNum;
+            BasePoint = cBasePoint;
 
-        //    foreach(string thename in colnames)
-        //    {
-        //        rgFound = (MOE.Range)rgUsed.Find(thename, Type.Missing, MOE.XlFindLookIn.xlValues,
-        //            MOE.XlLookAt.xlPart, MOE.XlSearchOrder.xlByRows, MOE.XlSearchDirection.xlNext, false, false);
-        //        int iColNum = rgFound.Column;
-        //        var value = ws.Cells[iRowNum, iColNum].Value2;
-
-        //    }
-        //    wb.Close(true, null, null);
-        //    excel.Quit();
-        //    return;
-        //}
-
+            switch (DalotType)
+            {
+                case DType.A:
+                    Sect = new double[] { 1900, 1900, 1400, 200, 200, 200, 50, 50, 200, 100 };
+                    break;
+                case DType.B:
+                    Sect = new double[] { 2500, 2500, 2000, 250, 250, 250, 50, 50, 200, 100 };
+                    break;
+                case DType.C:
+                    Sect = new double[] { 4700, 4700, 2800, 400, 400, 350, 50, 50, 200, 100 };
+                    break;
+                case DType.D:
+                    Sect = new double[] { 4700, 4700, 3800, 400, 400, 350, 50, 50, 200, 100 };
+                    break;
+                case DType.F:
+                    Sect = new double[] { 4900, 4900, 2700, 350, 350, 300, 50, 50, 200, 100 };
+                    break;
+                case DType.G:
+                    Sect = new double[] { 6900, 6900, 2700, 350, 350, 300, 50, 50, 500, 250 };
+                    break;
+                default:
+                    Sect = new double[] { 1900, 1900, 1400, 200, 200, 200, 50, 50, 200, 100 };
+                    break;
+            }
+            H1 = cH1;
+            H2 = cH2;
+            H3 = cH3;
+            H0 = cH0;
+            W1 = cW1;
+            W2 = cW2;            
+        }
 
 
         /// <summary>
@@ -342,8 +341,17 @@ namespace MyCAD1
                 
                 DimPloter.BiaoGao(H0 + (LSets[1].StartPoint.Y - AnchorPoint.Y) / 1000, LSets[1].StartPoint, modelSpace, tr, blockTbl, s);
                 DimPloter.BiaoGao(H0 + (LSets[1].EndPoint.Y - AnchorPoint.Y) / 1000, LSets[1].EndPoint, modelSpace, tr, blockTbl, s);
+                if (SegLength == Length)
+                {
+                    DimPloter.HengPo(db, Slop * 100, AnchorPoint.Convert3D(2000, 2000 * Slop + 10 * s), (Slop > 0), s);
+                }
+                else
+                {
+                    DimPloter.HengPo(db, Slop * 100, AnchorPoint.Convert3D(SegLength*1.5, SegLength*1.5 * Slop + 1 * s), (Slop > 0), s);
+                }
 
-
+                TextPloter.PrintLineText(db, LSets[0].GetMidPoint2d(-1000,-1000*Slop), LSets[0].GetMidPoint2d(-1000,-1000*Slop -1000), new string[]
+                { "C12/15 B.P e=10cm", "Graveleux lateritique e=40cm" }, false, s);
 
 
             }
@@ -531,7 +539,12 @@ namespace MyCAD1
                 DimPloter.Dim0(db, PL1.GetPoint3dAt(1), PL3.GetPoint3dAt(1), PL3.GetPoint2dAt(0).Convert3D(0, 500), DimStyleID);
                 DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(-0.25 * Sect[0], 100), true, s);
                 DimPloter.HengPo(db, 1.0, PL1.GetPoint3dAt(3).Convert3D(+0.25 * Sect[0], 100), false, s);
-
+                TextPloter.PrintLineText(db, PL2.GetLine(5).GetMidPoint2d(), PL2.GetLine(5).GetMidPoint2d(3 * s, -3 * s), new string[] { "20*10" }, false, s);
+                TextPloter.PrintLineText(db, PL2.GetLine(7).GetMidPoint2d(), PL2.GetLine(7).GetMidPoint2d(3 * s, 3 * s), new string[] { "5*5" }, false, s);
+                DBText temp = TextPloter.PrintText(db, "1/1", 2.5, H1.GetPoint2dAt(1).Convert2D(500, -500), s);                
+                temp.Rotation=-0.25 * Math.PI;
+                DBText temp2 = TextPloter.PrintText(db, "1/1", 2.5, H2.GetPoint2dAt(1).Convert2D(-500, -500), s);
+                temp2.Rotation = 0.25 * Math.PI;
                 //-------------------------------------------------------------------------------------------
 
 
@@ -553,6 +566,14 @@ namespace MyCAD1
                 //四孔
 
             }
+            TextPloter.PrintLineText(db, AnchorPoint.Convert2D(-1000, -50),AnchorPoint.Convert2D(-1000, -1000), new string[]
+                { "C12/15 B.P e=10cm", "Graveleux lateritique e=40cm" }, false, s);
+           
+            TextPloter.PrintText(db, "REMBLAI.G.L", 3 , AnchorPoint.Convert2D(-0.5 * Sect[0] - 1000, 1000), s);
+            
+            TextPloter.PrintTitle(db, "B-B剖面", AnchorPoint.Convert2D(0, Sect[2]+25*s), s);
+
+
             tr.Commit();
             tr.Dispose();
         }
@@ -698,10 +719,15 @@ namespace MyCAD1
             lay.ApplyToViewport(tr, 3, vp => { vp.DrawMyViewport(2, BasePoint.Convert3D(), Point2d.Origin, ScaleList[ScaleList.Length - 1]); vp.Locked = true; });
             tr.Commit();
             tr.Dispose();
-            
-            //ed.Command("_.ZOOM", "_E");
-            //ed.Command("_.ZOOM", ".7X");
-            //ed.Regen();
+
+
+
+#if CAD2018
+            ed.Command("_.ZOOM", "_E");
+            ed.Command("_.ZOOM", ".7X");
+            ed.Regen();
+#endif
+
         }
 
         public string Pk_string()

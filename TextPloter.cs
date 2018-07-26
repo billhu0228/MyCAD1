@@ -23,57 +23,62 @@ namespace MyCAD1
             double WdWidth=1.25;
             double LineWidth=0;
 
-            foreach(string cnt in textList)
-            {
-                double w = WdWidth * cnt.Length * scale;
-                if (w > LineWidth) { LineWidth = w; }
-            }
-            Line L1=new Line();
-            double xdir = isLeft ? -1 : 1;
-            double ydir;
-            if (EndPoint.Y > StartPoint.Y)
-            {
-                L1 = new Line(StartPoint.Convert3D(), EndPoint.Convert3D(0,+wdh*scale*(number-1)));
-                ydir = 1;
-            }
-            else
-            {
-                L1 = new Line(StartPoint.Convert3D(), EndPoint.Convert3D(0, -wdh * scale * (number - 1)));
-                ydir = -1;
-            }
-            L1.Layer = "标注";
-
-            Line side = new Line();
-            DBText txt=new DBText();
-            int i = 0;
-
-
-
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
                 BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                 BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                     OpenMode.ForWrite) as BlockTableRecord;
+                Line L1 = new Line();
+                Line side = new Line();
+                DBText txt = new DBText();
 
-                modelSpace.AppendEntity(L1);
-                tr.AddNewlyCreatedDBObject(L1, true);
                 foreach (string cnt in textList)
                 {
-                    side = new Line(EndPoint.Convert3D(0, i * wdh * scale * ydir), EndPoint.Convert3D(xdir * LineWidth, i * wdh * scale * ydir));
+                    double w = WdWidth * cnt.Length * scale;
+                    if (w > LineWidth) { LineWidth = w; }
+                }
+                
+                double xdir = isLeft ? -1 : 1;
+                double ydir;
+                if (EndPoint.Y > StartPoint.Y)
+                {
+                    L1 = new Line(StartPoint.Convert3D(), EndPoint.Convert3D(0, +(wdh + 0.5) * scale * (number - 1)));
+                    ydir = 1;
+                }
+                else
+                {
+                    L1 = new Line(StartPoint.Convert3D(), EndPoint.Convert3D(0, -(wdh + 0.5) * scale * (number - 1)));
+                    ydir = -1;
+                }
+                L1.Layer = "标注";
+                modelSpace.AppendEntity(L1);
+                tr.AddNewlyCreatedDBObject(L1, true);
+
+                int i = 0;
+                foreach (string cnt in textList)
+                {
+                    side = new Line(EndPoint.Convert3D(0, i *( wdh+0.5) * scale * ydir), EndPoint.Convert3D(xdir * LineWidth, i * (wdh+0.5) * scale * ydir));
                     side.Layer = "标注";
-                    txt.Layer = "标注";
-                    txt.TextStyleId = st["fsdb"];                    
-                    txt.WidthFactor = 0.75;
+                    modelSpace.AppendEntity(side);
+                    tr.AddNewlyCreatedDBObject(side, true);
+
+
+                    txt = new DBText();
+                    txt.TextString = cnt;
+                    txt.Height = wdh * scale;    
                     txt.Position = side.StartPoint;
                     txt.HorizontalMode = isLeft ? TextHorizontalMode.TextRight : TextHorizontalMode.TextLeft;
-                    txt.AlignmentPoint = side.StartPoint;
-                    txt.TextString = cnt;
-                    txt.Height = wdh * scale;
+                    txt.VerticalMode = TextVerticalMode.TextBottom;
+                    //txt.Justify = AttachmentPoint.BaseLeft;
+                    txt.AlignmentPoint =txt.Position;
+                    txt.Layer = "标注";
+                    txt.TextStyleId = st["fsdb"];
+                    txt.WidthFactor = 0.75;
                     modelSpace.AppendEntity(txt);
                     tr.AddNewlyCreatedDBObject(txt, true);
-                    modelSpace.AppendEntity(side);
-                    tr.AddNewlyCreatedDBObject(side, true);                    
+
+                    i++;
                 }
                 tr.Commit();
             }
@@ -149,8 +154,8 @@ namespace MyCAD1
                 C1.Layer = "标注";
                 C2.Layer = "标注";
 
-                L1 = new Line(PositionPoint.Convert3D(0, 1.5 * scale), endP.Convert3D());
-                L2 = new Line(PositionPoint.Convert3D(0, -1.5 * scale), startP.Convert3D());
+                L1 = new Line(PositionPoint.Convert3D(0, 1.6 * scale), endP.Convert3D());
+                L2 = new Line(PositionPoint.Convert3D(0, -1.6 * scale), startP.Convert3D());
                 L1.Layer = "标注";
                 L2.Layer = "标注";
 
@@ -171,7 +176,7 @@ namespace MyCAD1
 
 
 
-        public static void PrintText(Database db, string textstring,double H, Point2d PositionPoint, double scale = 100)
+        public static DBText PrintText(Database db, string textstring,double H, Point2d PositionPoint, double scale = 100,bool isCover=false)
         {
             DBText txt=new DBText();
 
@@ -190,13 +195,16 @@ namespace MyCAD1
                 txt.TextStyleId = st["fsdb"];
                 txt.Layer = "标注";
                 txt.WidthFactor = 0.75;
-
+                if (isCover)
+                {
+                    // 遮罩
+                }
 
                 modelSpace.AppendEntity(txt);
                 tr.AddNewlyCreatedDBObject(txt, true);
                 tr.Commit();
             }
-            return;
+            return txt;
         }
 
         public static void PrintTitle(Database db,string textstring,Point2d PositionPoint ,double scale= 100)
