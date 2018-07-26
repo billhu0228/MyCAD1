@@ -699,9 +699,9 @@ namespace MyCAD1
             tr.Commit();
             tr.Dispose();
             
-            ed.Command("_.ZOOM", "_E");
-            ed.Command("_.ZOOM", ".7X");
-            ed.Regen();
+            //ed.Command("_.ZOOM", "_E");
+            //ed.Command("_.ZOOM", ".7X");
+            //ed.Regen();
         }
 
         public string Pk_string()

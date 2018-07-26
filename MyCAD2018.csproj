@@ -7,8 +7,8 @@
     <ProjectGuid>{50BFBED6-6083-4AE9-8275-24559CE71716}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MyCAD1</RootNamespace>
-    <AssemblyName>MyCAD1</AssemblyName>
+    <RootNamespace>MyCAD18</RootNamespace>
+    <AssemblyName>MyCAD2018</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
