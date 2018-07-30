@@ -9,7 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.IO;
+using System.Collections;
 
 [assembly: CommandClass(typeof(MyCAD1.MyCommands))]
 
@@ -17,55 +18,6 @@ namespace MyCAD1
 {
     public class MyCommands
     {
-
-        [CommandMethod("OBL", CommandFlags.UsePickSet)]
-        public static void ObjectsByLayer()
-        {
-            var doc = Application.DocumentManager.MdiActiveDocument;
-            if (doc == null) return;
-            var ed = doc.Editor;
-
-
-            // Select the objects to sort
-
-
-
-            var psr = ed.GetSelection();
-            if (psr.Status != PromptStatus.OK)
-                return;
-
-
-
-            // We'll sort them based on a string value (the layer name)
-
-
-
-            var map = new Dictionary<ObjectId, string>();
-            foreach (dynamic id in psr.Value.GetObjectIds())
-            {
-                map.Add(id, id.Layer);
-            }
-
-
-            var sorted = map.OrderBy(kv => kv.Value);
-
-
-
-            // Print them in order to the command-line
-
-
-
-            foreach (var item in sorted)
-            {
-                ed.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
-            }
-        }
-
-
-
-
-
-
         public static void CADRead(string filename)
         {
             Document doc = Application.DocumentManager.Open(filename, false);
@@ -100,17 +52,6 @@ namespace MyCAD1
 
             doc.CloseAndDiscard();
         }
-
-
-
-
-
-
-
-
-
-
-
         //-------------------------------------------------------------------------------------------
         [CommandMethod("ini")]
         public static void CADini()
@@ -355,5 +296,260 @@ namespace MyCAD1
                 tr.Commit();
             }
         }
+        //-------------------------------------------------------------------------------------------
+        // Something From Keanw : http://www.keanw.com/
+        //-------------------------------------------------------------------------------------------
+        [CommandMethod("sect", CommandFlags.UsePickSet)]
+        public static void ObjectsByLayer()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            Transaction tr = db.TransactionManager.StartTransaction();
+
+
+            string output = Path.ChangeExtension(doc.Name, "dat");
+            
+            if (doc == null)
+                return;
+            var ed = doc.Editor;
+            // Select the objects to sort
+            // Setups the keyword options
+            PromptSelectionOptions Opts = new PromptSelectionOptions();
+            Opts.MessageForAdding = "\n请选择断面图";
+            var psr = ed.GetSelection(Opts);
+            if (psr.Status != PromptStatus.OK)
+                return;
+            // We'll sort them based on a string value (the layer name)
+            var map = new Dictionary<ObjectId, string>();
+            foreach (dynamic id in psr.Value.GetObjectIds())
+            {
+                if (id.ObjectClass.Name == "AcDbText")
+                {
+                    if (id.TextString.Contains("K"))
+                    {
+                        map.Add(id, id.TextString);
+                        WriteMessage(output, id.TextString);
+                    }
+                    else if (id.TextString.Contains("Wy"))
+                    {
+                        WriteMessage(output, "#------------------------------------------------------#");
+                        map.Add(id, id.TextString);
+                        WriteMessage(output, id.TextString);                        
+                    }
+                    if (id.Layer == "右标高1")
+                    {
+                        map.Add(id, id.TextString);
+                        WriteMessage(output, "H0=" + id.TextString);
+                    }
+                    else if (id.Layer == "左标高")
+                    {
+                        map.Add(id, id.TextString);
+                        WriteMessage(output, "H1=" + id.TextString);
+                    }
+                    else if (id.Layer == "左标高1")
+                    {
+                        map.Add(id, id.TextString);
+                        WriteMessage(output, "H2=" + id.TextString);
+                    }
+                }
+                else if (id.ObjectClass.Name == "AcDb2dPolyline")
+                {
+
+                    Polyline2d tmp = (Polyline2d)tr.GetObject(id, OpenMode.ForRead);
+                    // tmp.
+                    if (tmp.Layer == "dmx")
+                    {
+                        WriteMessage(output, "dmx");
+                        IEnumerator vertices = tmp.GetEnumerator();
+                        while (vertices.MoveNext())
+                        {
+                            ObjectId vetxid = (ObjectId)vertices.Current;
+                            Vertex2d vtx = (Vertex2d)vetxid.GetObject(OpenMode.ForRead);
+                            string loc = string.Format("{0},{1},0", vtx.Position.X, vtx.Position.Y);
+                            WriteMessage(output, loc);
+                        }
+                    }
+                    else if (tmp.Layer == "sjx")
+                    {
+                        WriteMessage(output, "sjx");
+                        IEnumerator vertices = tmp.GetEnumerator();
+                        while (vertices.MoveNext())
+                        {
+                            ObjectId vetxid = (ObjectId)vertices.Current;
+                            Vertex2d vtx = (Vertex2d)vetxid.GetObject(OpenMode.ForRead);
+                            string loc = string.Format("{0},{1},0", vtx.Position.X, vtx.Position.Y);
+                            WriteMessage(output, loc);
+                        }
+                    }
+
+                }
+                else if (id.ObjectClass.Name == "AcDbLine")
+                {
+                    Line zx = (Line)tr.GetObject(id, OpenMode.ForRead);
+                    if (zx.Layer == "zhix")
+                    {
+                        WriteMessage(output, "X=" + zx.StartPoint.X.ToString());
+                    }
+                }
+
+
+
+            }
+            var sorted = map.OrderBy(kv => kv.Value);
+            // Print them in order to the command-line
+            foreach (var item in sorted)
+            {
+                ed.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
+                
+            }
+
+
+
+            tr.Commit();
+            tr.Dispose();
+
+
+
+        }
+
+
+
+
+        //-------------------------------------------------------------------------------------------
+        
+        
+        [CommandMethod("bReplace", CommandFlags.UsePickSet)]
+        public static void TextReplace()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            Transaction tr = db.TransactionManager.StartTransaction();
+                       
+
+            if (doc == null)
+                return;
+            var ed = doc.Editor;
+
+            PromptSelectionOptions Opts = new PromptSelectionOptions();
+            Opts.MessageForAdding = "\n请选择文字范围";
+            var psr = ed.GetSelection(Opts);
+            if (psr.Status != PromptStatus.OK)
+                return;
+
+            PromptResult oldText = ed.GetString("\n请输入需替换文字");
+            PromptResult newText = ed.GetString("\n替换为");
+            
+            int counter = 0;
+            
+            foreach (dynamic id in psr.Value.GetObjectIds())
+            {
+                if (id.ObjectClass.Name == "AcDbText")
+                {
+                    if (id.TextString.Contains(oldText.StringResult))
+                    {
+                        DBText oldObj = (DBText)tr.GetObject(id, OpenMode.ForWrite);
+                        oldObj.TextString = newText.StringResult;
+                        counter++;
+                    }
+                }
+            }
+            {
+                ed.WriteMessage("\n{0}处文字被成功替换", counter);
+            }
+            
+            tr.Commit();
+            tr.Dispose();
+        }
+
+
+
+        [CommandMethod("bSumL", CommandFlags.UsePickSet)]
+        public static void LineSum()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                if (doc == null)
+                    return;
+                var ed = doc.Editor;
+
+                PromptSelectionOptions Opts = new PromptSelectionOptions();
+                Opts.MessageForAdding = "\n请选择直线";
+                var psr = ed.GetSelection(Opts);
+                if (psr.Status != PromptStatus.OK)
+                    return;
+
+
+                int counter = 0;
+                double sumup = 0;
+
+                foreach (dynamic id in psr.Value.GetObjectIds())
+                {
+                    if (id.ObjectClass.Name == "AcDbLine")
+                    {
+                        Line oldObj = (Line)tr.GetObject(id, OpenMode.ForRead);
+                        sumup += oldObj.Length;
+                        counter++;
+                    }
+                }
+                {
+                    ed.WriteMessage("\n共选择{0}个直线，合计长度{1:0.0}", counter, sumup);
+                }
+
+                tr.Commit();               
+
+            }
+
+
+
+        }
+
+
+
+
+
+        //-------------------------------------------------------------------------------------------
+
+
+
+
+
+
+        /// <summary>
+        /// 输出指定信息到文本文件
+        /// </summary>
+        /// <param name="path">文本文件路径</param>
+        /// <param name="msg">输出信息</param>
+        public static void WriteMessage(string path, string msg)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.BaseStream.Seek(0, SeekOrigin.End);
+                    sw.WriteLine("{0}", msg, DateTime.Now);
+                    sw.Flush();
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

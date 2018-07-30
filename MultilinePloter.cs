@@ -132,11 +132,69 @@ namespace MyCAD1
 
 
 
+        public static void PlotSideLine(Database db, Line AxisLine, Line StartLine, Line EndLine,double scale, bool isLeft = false)
+        {
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+                Point3dCollection pts = new Point3dCollection();
+                Point3d LimitA, LimitB;
+                StartLine.IntersectWith(AxisLine, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                LimitA = pts[0];
+                pts.Clear();
+                EndLine.IntersectWith(AxisLine, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                LimitB = pts[0];
+                Point3d st, ed;
+                double distA = Math.Abs(LimitA.DistanceTo(AxisLine.StartPoint));                
+                double distB = Math.Abs(LimitB.DistanceTo(AxisLine.EndPoint));
+                int dir = LimitA.Y > AxisLine.StartPoint.Y ? 1 : -1;
+                int dirx = isLeft ? -1 : 1;
+                double kk = AxisLine.GetK();
+                for (int i=0;i<distA/2/scale;i++)
+                {
+                    double dy = i * 2 * scale * dir;
+                    st = AxisLine.StartPoint.Convert3D(dy/ kk, dy);
+                    if (i % 2 == 0)
+                    {
+                        ed = st.Convert3D(dirx * 2 * scale, 0, 0);
+                    }
+                    else
+                    {
+                        ed= st.Convert3D(dirx * 4 * scale, 0, 0);
+                    }
+                    Line tmp = new Line(st, ed);
+                    modelSpace.AppendEntity(tmp);
+                    tr.AddNewlyCreatedDBObject(tmp, true);                    
+                }
+                for (int i = 0; i < distB / 2 / scale; i++)
+                {
+                    double dy = -i * 2 * scale * dir;
+                    st = AxisLine.EndPoint.Convert3D(dy / kk, dy);
+                    if (i % 2 == 0)
+                    {
+                        ed = st.Convert3D(dirx * 2 * scale, 0, 0);
+                    }
+                    else
+                    {
+                        ed = st.Convert3D(dirx * 4 * scale, 0, 0);
+                    }
+                    Line tmp = new Line(st, ed);
+                    modelSpace.AppendEntity(tmp);
+                    tr.AddNewlyCreatedDBObject(tmp, true);
+                }
 
 
 
 
 
+                tr.Commit();
+            }
+        }
+
+
+        
 
 
 

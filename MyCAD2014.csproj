@@ -62,8 +62,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BPublicFunctions.cs" />
     <Compile Include="CADini.cs" />
     <Compile Include="DimPloter.cs" />
+    <Compile Include="DataExtract.cs" />
     <Compile Include="TextPloter.cs" />
     <Compile Include="HatchPloter.cs" />
     <Compile Include="MultilinePloter.cs" />

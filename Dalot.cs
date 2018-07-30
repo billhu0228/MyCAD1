@@ -17,6 +17,8 @@ namespace MyCAD1
     public enum AType { BZQ, JSJ, None, Other };
     public enum DType { A, B, C, D, E, F, G, H, I, J, K, L }
 
+
+
     public class Dalot
     {
         public double Pk;
@@ -30,6 +32,7 @@ namespace MyCAD1
         public int LayerNum;
         public double H1, H2, H3, H0;
         public double W1, W2;
+        public Polyline SJX, DMX;     
 
 
 
@@ -143,24 +146,25 @@ namespace MyCAD1
                 OpenMode.ForWrite) as BlockTableRecord;
             DimStyleTable dst = (DimStyleTable)tr.GetObject(db.DimStyleTableId, OpenMode.ForRead);
             var DimStyleID = dst["1-" + s.ToString()];
-            Point2d BB = AnchorPoint;
+            
             Point3dCollection pts = new Point3dCollection();  // 交点获取
             double ang_in_rad = Ang / 180 * Math.PI;
             Line[] LSets=new Line[4];
-            Polyline[] LeftPolylineSet, RightPolylineSet;
+            Polyline[] LeftPolylineSet=new Polyline[3], RightPolylineSet=new Polyline[3];
             Extents2d CurExt;
-            Point2d minPoint = BasePoint, maxPoint= BasePoint;
+            Point2d minPoint = AnchorPoint, maxPoint= AnchorPoint;
 
             if (DalotType <= DType.E)
             {
                 //一孔
                 double x0, x1, y0, y1;
+                double dx, dy;
                 x0 = -XMidDist * Math.Cos(Math.Atan(Slop));
                 x1 = (Length - XMidDist) * Math.Cos(Math.Atan(Slop));
                 y0 = -0.5 * Sect[0] + x0 * Math.Tan(ang_in_rad);
                 y1 = -0.5 * Sect[0] + x1 * Math.Tan(ang_in_rad);
                 double factor = Math.Sqrt(Math.Pow(x1 - x0,2) + Math.Pow(y1 - y0,2))/Length;
-                LSets = MulitlinePloter.PlotN(db, BB.Convert3D(x0, y0), BB.Convert3D(x1, y1),  // 涵身
+                LSets = MulitlinePloter.PlotN(db, AnchorPoint.Convert3D(x0, y0), AnchorPoint.Convert3D(x1, y1),  // 涵身
                     new double[] { 0, Sect[5], Sect[0] - Sect[5], Sect[0] }, new string[] { "虚线", "虚线", "虚线", "虚线" }, true);
                 MulitlinePloter.PlotCutLine(db, LSets[0], LSets[LSets.Length - 1], GetSeps(factor), "虚线");
                 
@@ -178,7 +182,9 @@ namespace MyCAD1
                     DimPloter.DimAng(db, LSets[1], LeftPolylineSet[4].GetLine(1), LSets[1].StartPoint.Convert3D(-1000, -10), DimStyleID);
                     DimPloter.Dim0(db, LeftPolylineSet[4].GetPoint3dAt(1), LeftPolylineSet[0].GetPoint3dAt(0),
                         LeftPolylineSet[0].GetPoint3dAt(0).Convert3D(-15*s, 0), DimStyleID, 120.0 / 180.0 * Math.PI);
-                    minPoint = minPoint.Convert2D(LeftPolylineSet[0].GetPoint2dAt(5).X,LSets[0].StartPoint.Y-20*s);
+                    dx = LeftPolylineSet[0].GetPoint2dAt(5).X - AnchorPoint.X;
+                    dy = LSets[0].StartPoint.Y - 30 * s - AnchorPoint.Y;
+                    minPoint = minPoint.Convert2D(dx,dy);
                     TextPloter.PrintCirText(db, 25, LeftPolylineSet[0].GetPoint2dAt(0).Convert2D(-10 * s, 0.25 * Sect[0]), s);
                     
                 }
@@ -193,20 +199,25 @@ namespace MyCAD1
                     DimPloter.DimAng(db, LSets[2], RightPolylineSet[3].GetLine(1), LSets[2].EndPoint.Convert3D(1000, 10), DimStyleID);
                     DimPloter.Dim0(db, RightPolylineSet[4].GetPoint3dAt(1), RightPolylineSet[0].GetPoint3dAt(0),
                         RightPolylineSet[0].GetPoint3dAt(0).Convert3D(1500, 0), DimStyleID, -120.0 / 180.0 * Math.PI);
-                    maxPoint = RightPolylineSet[0].GetPoint2dAt(4).Convert2D(10*s, 20*s);
+                    dx = RightPolylineSet[0].GetPoint2dAt(4).Convert2D(0, 20 * s).X - AnchorPoint.X;
+                    dy = RightPolylineSet[0].GetPoint2dAt(4).Convert2D(0, 20 * s).Y - AnchorPoint.Y;
+
+                    maxPoint = AnchorPoint.Convert2D(dx,dy);
                     TextPloter.PrintCirText(db, 25, RightPolylineSet[0].GetPoint2dAt(0).Convert2D(10 * s, 0.25 * Sect[0]), s);
                 }               
 
                 DimPloter.Dim0(db, LSets[0].StartPoint, LSets[1].StartPoint, LSets[0].StartPoint.Convert3D(15*s, 0), DimStyleID, 0.5 * Math.PI + ang_in_rad);
                 DimPloter.Dim0(db, LSets[1].StartPoint, LSets[2].StartPoint, LSets[0].StartPoint.Convert3D(15 * s, 0), DimStyleID, 0.5 * Math.PI + ang_in_rad);
                 DimPloter.Dim0(db, LSets[2].StartPoint, LSets[3].StartPoint, LSets[0].StartPoint.Convert3D(15 * s, 0), DimStyleID, 0.5 * Math.PI + ang_in_rad);
-                
-                TextPloter.PrintTitle(db, "平面图", BasePoint.Convert2D(0, maxPoint.Y + 10 * s),s);
+
+                dy = maxPoint.Y - AnchorPoint.Y;
+                double dymin = minPoint.Y - AnchorPoint.Y;
+                TextPloter.PrintTitle(db, "平面图", AnchorPoint.Convert2D(0,dy+ 10 * s),s);
                 maxPoint = maxPoint.Convert2D(0, 10 * s + 5 * s);
-                TextPloter.DimSection(db, 'A', BasePoint.Convert2D(minPoint.X-5*s, 0), BasePoint.Convert2D(maxPoint.X, 0),s);
-                minPoint = minPoint.Convert2D(-5*s, 0);
-                TextPloter.DimSection(db, 'B', BasePoint.Convert2D(0, minPoint.Y-5*s), BasePoint.Convert2D(0,LSets[LSets.Length-1].StartPoint.Y+500), s);
-                minPoint = minPoint.Convert2D(0, -5 * s);
+                TextPloter.DimSection(db, 'A', AnchorPoint.Convert2D(minPoint.X-5*s, 0), AnchorPoint.Convert2D(maxPoint.X, 0),s);
+                dy = LSets[LSets.Length - 1].StartPoint.Y - AnchorPoint.Y + 5 * s;
+                TextPloter.DimSection(db, 'B', AnchorPoint.Convert2D(0, dymin - 5 * s), AnchorPoint.Convert2D(0, dy), s);
+
 
 
             }
@@ -224,6 +235,46 @@ namespace MyCAD1
                 //四孔
 
             }
+
+
+
+
+            // 路基
+            pts.Clear();
+
+            Line[] RoadSets = MulitlinePloter.PlotN(db, minPoint.Convert3D(), minPoint.Convert3D(maxPoint.X - minPoint.X, 0),
+                new double[] {0, 2*(AnchorPoint.Y - minPoint.Y) }, new string[] { "虚线", "虚线" }, true);
+
+            double SideDistLeft = AnchorPoint.X - minPoint.X-W1;
+            double SiedDistRight = maxPoint.X - AnchorPoint.X - W2;
+            Line[] SideSets = MulitlinePloter.PlotCutLine(db, RoadSets[0], RoadSets[1],
+                new double[] { 0, SideDistLeft,  SideDistLeft + W1 + W2,maxPoint.X-minPoint.X }, "细线", true);
+            MulitlinePloter.PlotSideLine(db, SideSets[1], LSets[0], LSets[LSets.Length - 1], s, true);
+            MulitlinePloter.PlotSideLine(db, SideSets[2], LSets[0], LSets[LSets.Length - 1], s, false);
+
+
+            // 中心线
+            pts.Clear();
+            Line CenterX = new Line(AnchorPoint.Convert3D(-1, Math.Tan(ang_in_rad) * -1), AnchorPoint.Convert3D(1, Math.Tan(ang_in_rad)));
+            CenterX.IntersectWith(LeftPolylineSet[0].GetLine(4), Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+            CenterX.StartPoint = pts[0];
+            pts.Clear();
+            CenterX.IntersectWith(RightPolylineSet[0].GetLine(4), Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+            CenterX.EndPoint = pts[0];
+            CenterX.Layer = "中心线";
+            modelSpace.AppendEntity(CenterX);
+            tr.AddNewlyCreatedDBObject(CenterX, true);
+
+            Line CenterY = new Line(AnchorPoint.Convert3D(0, -1), AnchorPoint.Convert3D(0, 1));
+            pts.Clear();
+            CenterY.IntersectWith(RoadSets[0], Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+            CenterY.StartPoint = pts[0];
+            pts.Clear();
+            CenterY.IntersectWith(RoadSets[RoadSets.Length - 1], Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+            CenterY.EndPoint = pts[0];
+            CenterY.Layer = "中心线";
+            modelSpace.AppendEntity(CenterY);
+            tr.AddNewlyCreatedDBObject(CenterY, true);
 
             //
             TextPloter.PrintCirText(db, (int)Sect[4] / 10, AnchorPoint.Convert2D(0.5 * SegLength, -0.2 * Sect[1]), 
@@ -739,6 +790,15 @@ namespace MyCAD1
 
             return res;
         }
+
+
+        public void ReadData()
+        {
+            BPublicFunctions.GetXPath("请选择dat文件");
+            
+            return;
+        }
+
 
     }
 }

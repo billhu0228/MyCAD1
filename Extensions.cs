@@ -3,6 +3,9 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using MOExcel = Microsoft.Office.Interop.Excel;
 
 [assembly: CommandClass(typeof(MyCAD1.Extensions))]
 
@@ -245,7 +248,19 @@ namespace MyCAD1
 
 
 
+        [DllImport("User32.dll")]
+        public static extern int GetWindowThreadProcessId(IntPtr hWnd, out int ProcessId);
 
+        public static void KillExcelApp(this MOExcel.Application app)
+        {
+            app.Quit();
+            IntPtr intptr = new IntPtr(app.Hwnd);
+            int id;
+            GetWindowThreadProcessId(intptr, out id);
+            var p = Process.GetProcessById(id);
+            //if (p != null)
+            p.Kill();
+        }
 
 
 
@@ -276,6 +291,14 @@ namespace MyCAD1
         }
 
         
+
+
+        public static double GetK(this Line cL)
+        {
+            double k = 0;
+            k = (cL.EndPoint.Y - cL.StartPoint.Y) / (cL.EndPoint.X - cL.StartPoint.X);
+            return k;
+        }
         
         /// <summary>
         /// 平面\立面视口.

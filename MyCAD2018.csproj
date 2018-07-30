@@ -66,7 +66,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CADini.cs" />
+    <Compile Include="DataExtract.cs" />
     <Compile Include="DimPloter.cs" />
+    <Compile Include="BPublicFunctions.cs" />
     <Compile Include="TextPloter.cs" />
     <Compile Include="HatchPloter.cs" />
     <Compile Include="MultilinePloter.cs" />
@@ -84,6 +86,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>Rem "D:\Program Files\Autodesk\AutoCAD 2018\acad.exe"  /product ACAD /language "zh-CN"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
