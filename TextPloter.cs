@@ -16,6 +16,35 @@ namespace MyCAD1
     class TextPloter
     {
 
+
+        public static void PrintNote(Database db, ObjectId recderID, Point3d InsertPoint)
+        {
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord recorder = tr.GetObject(recderID, OpenMode.ForWrite) as BlockTableRecord;
+                MText theNote=new MText();
+                theNote.Contents = "Some text in the default colour...\\P" +
+                    "{\\C1;Something red}\\P" +
+                    "{\\C2;Something yellow}\\P" +
+                    "{\\C3;And} {\\C4;something} " +
+                    "{\\C5;multi-}{\\C6;coloured}\\P";
+                theNote.Location = InsertPoint;
+                recorder.AppendEntity(theNote);
+                tr.AddNewlyCreatedDBObject(theNote, true);
+                tr.Commit();
+            }
+            return;
+        }
+
+
+
+
+
+
+
+
         public static void PrintLineText(Database db,Point2d StartPoint, Point2d EndPoint,string[] textList,bool isLeft=true,double scale = 100)
         {
             int number = textList.Count();

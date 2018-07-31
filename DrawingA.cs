@@ -33,7 +33,8 @@ namespace MyCAD1
         public struct DMT
         {
             public double Wz, Wy;
-            public double H0, H1, H2;
+            public double H1, H2, H3;
+            public double Ht, Hw;
             public double x0;
             public string pk_string;
             public Polyline dmx, sjx;
@@ -55,9 +56,11 @@ namespace MyCAD1
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
             Editor ed = doc.Editor;
+            ObjectId paperSpace = db.CreatPaperSpace();
+            //Transaction tr = db.TransactionManager.StartTransaction();
 
             // 初始化带帽图列表
-            string dmtpath = BPublicFunctions.GetXPath("选择带帽图数据");
+            string dmtpath = BPublicFunctions.GetXPath("选择带帽图数据","断面图提取文件|*.dat");
             Dmt_list = IniDMT(dmtpath);           
 
 
@@ -65,21 +68,11 @@ namespace MyCAD1
             //读取数据
             Dalot TheDalot = new Dalot();
             System.Data.DataTable Parameters = new System.Data.DataTable();
+            test:
             string aa = BPublicFunctions.GetXPath("选择设计表");
             if (aa == "")
             {
-                ed.WriteMessage("\n建模使用默认数据");
-                TheDalot =new Dalot();
-                Extents2d extA;
-                //绘图
-                extA = TheDalot.PlotA(db, TheDalot.BasePoint, 100);
-                double dAB = extA.MinPoint.Y - TheDalot.BasePoint.Y;
-                dAB -= 1500;//图名
-                dAB -= 1500;//顶标注
-                dAB -= 1500; //H2
-                dAB -= (TheDalot.H2 - TheDalot.H0) * 1000;
-                TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), 100);
-                TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(30000, dAB), 75);
+                goto test;
             }
             else
             {
@@ -92,45 +85,125 @@ namespace MyCAD1
 
 
             // 实例化并绘图
-            if (aa != "")
+
+            for (int ii = 0; ii < Parameters.Rows.Count; ii++)
             {
-                for (int ii = 0; ii < Parameters.Rows.Count; ii++)
+                // 实例化涵洞
+                TheDalot = GetDalotFromDataTable(Parameters, ii);
+                // 查询带帽图
+                DMT relatedDMT = DmtLookUp(Dmt_list, TheDalot.Pk_string());
+                Point3d PointDMT = new Point3d(relatedDMT.x0, 0, 0);
+                TheDalot.W1 = relatedDMT.Wy * 1000;
+                TheDalot.W2 = relatedDMT.Wz * 1000;
+                TheDalot.H1 = relatedDMT.H1;
+                TheDalot.H2 = relatedDMT.H2;
+                TheDalot.H3 = relatedDMT.H3;
+                if (TheDalot.H0 == 0)
                 {
-                    // 实例化涵洞
-                    TheDalot = GetDalotFromDataTable(Parameters, ii);
-                    // 查询带帽图
-                    DMT relatedDMT = DmtLookUp(Dmt_list, TheDalot.Pk_string());
-
-
-    
-                    //绘图
-                    Extents2d extA;
-                    extA = TheDalot.PlotA(db, TheDalot.BasePoint, 100);
-                    double dAB = extA.MinPoint.Y - TheDalot.BasePoint.Y;
-                    dAB -= 1500;//图名
-                    dAB -= 1500;//顶标注
-                    dAB -= 1500; //H2
-                    dAB -= (TheDalot.H2 - TheDalot.H0) * 1000;
-                    TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), 100);
-                    TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(30000, dAB), 75);
-
-                    if (ii == 1)
+                    if (relatedDMT.Hw != 0)
                     {
-                        break;
+                        TheDalot.H0 = TheDalot.H2 - 2 * TheDalot.Sect[2] / 1000;
+                    }
+                    else
+                    {
+                        TheDalot.H0 = TheDalot.H2 - relatedDMT.Ht - TheDalot.Sect[2] / 1000;
                     }
                 }
+
+                Point3d SJXRefPoint = relatedDMT.sjx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
+                Point3d DmxRefP = relatedDMT.dmx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
+
+
+
+                //绘图
+                int scaleA = TheDalot.ScaleA;
+                int scaleB = TheDalot.ScaleB;
+
+                Extents2d extA;
+                extA = TheDalot.PlotA(db, TheDalot.BasePoint);
+                double cx = (extA.MaxPoint.X + extA.MinPoint.X) * 0.5;
+                double cy = (extA.MaxPoint.Y + extA.MinPoint.Y) * 0.5;
+                double halfY = (extA.MaxPoint.Y - extA.MinPoint.Y) * 0.5;
+                Point2d centerPoint = Point2d.Origin.Convert2D(cx, extA.MaxPoint.Y - 277 * 0.5 * scaleA + 15 * scaleA);
+                double dAB = extA.MinPoint.Y - TheDalot.BasePoint.Y;
+                dAB -= 1500;//图名
+                dAB -= 1500;//顶标注
+                dAB -= 1500; //H2
+                dAB -= (TheDalot.H2 - TheDalot.H0) * 1000;
+                TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), relatedDMT.sjx, relatedDMT.dmx,
+                    SJXRefPoint, DmxRefP);
+                TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(30000, dAB));
+
+
+                // 成图
+
+                db.XrefAttachAndInsert(@"G:\涵洞自动成图程序\TK.dwg", paperSpace, Point3d.Origin.Convert3D(0, 24 - (1 + ii) * 297, 0));
+
+                using (Transaction tr = db.TransactionManager.StartTransaction())
+                {
+                    Layout lay = (Layout)tr.GetObject(paperSpace, OpenMode.ForWrite);
+                    //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 100); vp.Locked = true; });
+                    //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 75); vp.Locked = true; });
+                    var vpIds = lay.GetViewports();
+                    Viewport vpA, vpB;
+                    var btr = (BlockTableRecord)tr.GetObject(lay.BlockTableRecordId, OpenMode.ForWrite);
+                    vpA = new Viewport();
+                    btr.AppendEntity(vpA);
+                    tr.AddNewlyCreatedDBObject(vpA, true);
+                    vpA.On = true;
+                    vpA.GridOn = false;
+                    vpA.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -(1 + ii) * 297, 0), centerPoint, 100);
+                    vpB = new Viewport();
+                    btr.AppendEntity(vpB);
+                    tr.AddNewlyCreatedDBObject(vpB, true);
+                    vpB.On = true;
+                    vpB.GridOn = false;
+                    vpB.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -(1 + ii) * 297, 0), Point2d.Origin, 100);
+
+
+                    MText theNote = new MText();
+                    theNote.Contents = "Note:" +
+                        "1.L'unité de dimension est en centimètre sauf que les cotes. \\P" +
+                        "2.Le corps du dalot est préfabriqué en segment et la tête d'ouvrage est coulés sur place. Le joint est  mis en place entre différents parties. \\P" +
+                        "3.Explication pour joint et couche d'étanchéité : \\P" +
+                        "   Joint: Le joint est rempli par bitume et filasse ou par autre matériaux d'étanchéité élastique. Le pied-droit et tablier adoptent deux couches " +
+                        "de feutre bitumé coller dessus le joint par bitume, la largeur de feutre bitumé est de 40cm. Le feutre bitumé est collé dessus le gâchis hydrofuge si le tableau est couvert par le gâchis hydrofuge.\\P" +
+                        "   Couche d'étanchéité: Pour hauteur de remblai plus de 0.5m, il faut enduire bitume avec épaisseur de 1~1.5mm deux  fois pour les partie enterrés du dalot; Pour H.remblai moins de 0.5m, " +
+                        "il faut d'abord mettre 2cm de  mortier hydrofuge sur tablier et puis enduire bitume avec épaisseur de 1~1.5mm deux fois pour les  partie enterrés du dalot. \\P" +
+                        "4.Vérifier la conformabilité entre les plans et terrain réel avant l'exécution du travaux. Il faut informer le bureau d'étude à réviser la cote s'il existe différence évidente.\\P" +
+                        "5.Annuler l'enrochement d'exutoire du dalot si sa fondation est en roche. Après l'achèvement du dalot, il faut remplir ou creuser l'amont et l'aval du dalot pour assurer l'évacuation d'eau.\\P";
+                    theNote.Location = Point3d.Origin.Convert3D(40, 40 - (1 + ii) * 297, 0);
+
+                    btr.AppendEntity(theNote);
+                    tr.AddNewlyCreatedDBObject(theNote, true);
+
+                    tr.Commit();
+                }
+
+
+
+
+
+                //break;
+
+
+
 
 
             }
 
-            
 
 
 
 
-            // 成图
-            //TheDalot.CreatPaperSpace(db, ed, new int[] { 100, 100, 75 });
 
+
+
+
+
+
+
+            //ObjectId paperSpace=TheDalot.CreatPaperSpace(db, ed, new int[] { 100, 100, 75 });
 
 
         }
@@ -147,11 +220,57 @@ namespace MyCAD1
             double SegLength = double.Parse((string)theDT.Rows[rowIndex]["SegLength"])*1000.0;
             double XMidDist = double.Parse((string)theDT.Rows[rowIndex]["XMidLength"])*1000.0;
             int no= int.Parse((string)theDT.Rows[rowIndex]["id"]);
+            double H0 = double.Parse((string)theDT.Rows[rowIndex]["H0"]);
+            int c= int.Parse((string)theDT.Rows[rowIndex]["c"]);
+            double w= double.Parse((string)theDT.Rows[rowIndex]["w"]);
+            double h = double.Parse((string)theDT.Rows[rowIndex]["h"]);
+            DType theType=DType.A;
+            if (c==1)
+            {
+                if (w == 1.5)
+                {
+                    theType = DType.A;
+                }
+                else if(w==2.0)
+                {
+                    theType = DType.B;
+                }
+                else if (w == 4.0)
+                {
+                    if (h == 2.0)
+                    {
+                        theType = DType.C;
+                    }
+                    else
+                    {
+                        theType = DType.D;
+                    }
+                }
+            }
+            else if(c==2)
+            {
+                //两孔
+                if (w == 2.0)
+                {
+                    theType = DType.F;
+                }
+                else if(w==3.0)
+                {
+                    theType = DType.G;
+                }                
+            }
+            else
+            {
+                theType = DType.A;
+            }
             //public AType Amont, Avale;
             //public DType DalotType;
             Point2d BasePoint=new Point2d(0,no*-50000);            
             int LayerNum= int.Parse((string)theDT.Rows[rowIndex]["layerNum"]);
-            Dalot res = new Dalot(710, Ang, Slop, Length, SegLength, XMidDist, DType.B, AType.BZQ, AType.BZQ, BasePoint, LayerNum);
+
+            int sA= int.Parse((string)theDT.Rows[rowIndex]["ScaleA"]);
+            int sB = int.Parse((string)theDT.Rows[rowIndex]["ScaleB"]);
+            Dalot res = new Dalot(PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, AType.JSJ, AType.BZQ, BasePoint, LayerNum,H0,sA,sB);
             return res;
         }
 
@@ -245,13 +364,23 @@ namespace MyCAD1
                     {
                         result.Add(item);
                         item = new DMT();
+                        item.Ht = 0;
+                        item.Hw = 0;
                     }
                     continue;
+                }
+                else if (nextLine.StartsWith("Hw"))
+                {
+                    MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
+                    item.Hw = Convert.ToDouble(matches[0].Value);
+                    item.Wz = Convert.ToDouble(matches[1].Value);
+                    item.Wy = Convert.ToDouble(matches[2].Value);
                 }
 
                 else if (nextLine.StartsWith("Ht"))
                 {
                     MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
+                    item.Ht = Convert.ToDouble(matches[0].Value);
                     item.Wz = Convert.ToDouble(matches[1].Value);
                     item.Wy = Convert.ToDouble(matches[2].Value);
                 }
@@ -262,17 +391,17 @@ namespace MyCAD1
                 else if (nextLine.StartsWith("H0"))
                 {
                     MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
-                    item.H0 = Convert.ToDouble(matches[1].Value);
+                    item.H1 = Convert.ToDouble(matches[1].Value);
                 }
                 else if (nextLine.StartsWith("H1"))
                 {
                     MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
-                    item.H1 = Convert.ToDouble(matches[1].Value);
+                    item.H2 = Convert.ToDouble(matches[1].Value);
                 }
                 else if (nextLine.StartsWith("H2"))
                 {
                     MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
-                    item.H2 = Convert.ToDouble(matches[1].Value);
+                    item.H3 = Convert.ToDouble(matches[1].Value);
                 }
                 else if (nextLine.StartsWith("sjx"))
                 {
@@ -310,7 +439,7 @@ namespace MyCAD1
                 else
                 {
                     MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
-                    if (matches.Count !=2|| matches.Count != 3)
+                    if (matches.Count !=2 && matches.Count != 3)
                     {                        
                         break;
                     }

@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using MOExcel = Microsoft.Office.Interop.Excel;
 
@@ -76,7 +77,7 @@ namespace MyCAD1
                 btr.AppendEntity(vp);
                 tr.AddNewlyCreatedDBObject(vp, true);
                 // Turn it - and its grid - on
-                vp.On = true;
+                //vp.On = true;
                 vp.GridOn = false;
             }
             // Finally we call our function on it
@@ -355,106 +356,223 @@ namespace MyCAD1
             // vp.ViewHeight *= 1.1, for instance)
             vp.CustomScale *= fac;
         }
+        /// <summary>
+        /// 引入并插入参照
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="path"></param>
+        /// <param name="paperSpaceId"></param>
+        /// <param name="pos"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static bool XrefAttachAndInsert(this Database db, string path, ObjectId paperSpaceId,Point3d pos, string name = null)
+        {
+            var ret = false;
+            if (!File.Exists(path))
+                return ret;
+
+            if (String.IsNullOrEmpty(name))
+                name = Path.GetFileNameWithoutExtension(path);
+
+            try
+            {
+                using (var tr = db.TransactionManager.StartOpenCloseTransaction())
+                {
+                    var xId = db.AttachXref(path, name);
+                    if (xId.IsValid)
+                    {
+                        Layout tmp = (Layout)tr.GetObject(paperSpaceId, OpenMode.ForWrite);
+                        var btr = (BlockTableRecord)tr.GetObject(tmp.BlockTableRecordId, OpenMode.ForWrite);
+                        var br = new BlockReference(pos, xId);
+                        btr.AppendEntity(br);
+                        tr.AddNewlyCreatedDBObject(br, true);
+                        ret = true;
+                    }
+                    tr.Commit();
+                }
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception)
+            { }
+
+            return ret;
+        }
+
+
+
+
+
+
+        public static ObjectId CreatPaperSpace(this Database db)
+        {
+            // 基本句柄
+           
+            Transaction tr = db.TransactionManager.StartTransaction();
+            BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+            BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                OpenMode.ForWrite) as BlockTableRecord;
+            DBDictionary lays = tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead) as DBDictionary;
+            int name = 1;
+            foreach (DBDictionaryEntry item in lays)
+            {
+                if (item.Key == name.ToString())
+                {
+                    name++;
+                }
+            }
+            ObjectId id = LayoutManager.Current.CreateAndMakeLayoutCurrent(name.ToString(), true);
+            var lay = (Layout)tr.GetObject(id, OpenMode.ForWrite);
+            lay.SetPlotSettings("A3", "monochrome.ctb", "Adobe PDF");
+            tr.Commit();
+            tr.Dispose();
+            return id;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
 
 
 
     //public class Commands
-   // {
-        //[CommandMethod("goo")]
-        //public static void CreateLayout(double ytop)
-        //{
-        //    var doc = Application.DocumentManager.MdiActiveDocument;
+    // {
+    //[CommandMethod("goo")]
+    //public static void CreateLayout(double ytop)
+    //{
+    //    var doc = Application.DocumentManager.MdiActiveDocument;
 
-        //    if (doc == null)
-        //        return;
-        //    var db = doc.Database;
-        //    var ed = doc.Editor;
-        //    var ext = new Extents2d();
-        //    using (var tr = db.TransactionManager.StartTransaction())
-        //    {
-        //        // Create and select a new layout tab
-        //        var id = LayoutManager.Current.CreateAndMakeLayoutCurrent("1-1");
-        //        // Open the created layout
-        //        var lay = (Layout)tr.GetObject(id, OpenMode.ForWrite);
+    //    if (doc == null)
+    //        return;
+    //    var db = doc.Database;
+    //    var ed = doc.Editor;
+    //    var ext = new Extents2d();
+    //    using (var tr = db.TransactionManager.StartTransaction())
+    //    {
+    //        // Create and select a new layout tab
+    //        var id = LayoutManager.Current.CreateAndMakeLayoutCurrent("1-1");
+    //        // Open the created layout
+    //        var lay = (Layout)tr.GetObject(id, OpenMode.ForWrite);
 
-        //        // Make some settings on the layout and get its extents
-        //        lay.SetPlotSettings("A3", "monochrome.ctb", "Adobe PDF");
-        //        ext = lay.GetMaximumExtents();
-        //        lay.ApplyToViewport(tr, 2,
-        //            vp => 
-        //            {
-        //                vp.DrawMyViewport(1,ytop);
-        //                //vp.ResizeViewport(ext, 0.8);
-        //                vp.Locked = true;
-        //            }
-        //            );
-        //        lay.ApplyToViewport(tr, 3,    
-        //            vp =>  {
-        //                vp.DrawMyViewport(2,ytop);
-        //                vp.Locked = true;
-        //            }
-        //            );
-        //        //-----------------------------------------------------------------------------
-        //        var blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-        //        var ps = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
-        //        TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForWrite) as TextStyleTable;
+    //        // Make some settings on the layout and get its extents
+    //        lay.SetPlotSettings("A3", "monochrome.ctb", "Adobe PDF");
+    //        ext = lay.GetMaximumExtents();
+    //        lay.ApplyToViewport(tr, 2,
+    //            vp => 
+    //            {
+    //                vp.DrawMyViewport(1,ytop);
+    //                //vp.ResizeViewport(ext, 0.8);
+    //                vp.Locked = true;
+    //            }
+    //            );
+    //        lay.ApplyToViewport(tr, 3,    
+    //            vp =>  {
+    //                vp.DrawMyViewport(2,ytop);
+    //                vp.Locked = true;
+    //            }
+    //            );
+    //        //-----------------------------------------------------------------------------
+    //        var blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+    //        var ps = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
+    //        TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForWrite) as TextStyleTable;
 
-        //        Point2d p0 = new Point2d(0, 0);
-        //        Point2d p1 = HanDong.Convert2d(p0, 420, 0);
-        //        Point2d p2 = HanDong.Convert2d(p1, 0,297);
-        //        Point2d p3 = HanDong.Convert2d(p2,-420,0);
-        //        Polyline PL1 = new Polyline();
-        //        PL1.AddVertexAt(0, p0, 0, 0, 0);
-        //        PL1.AddVertexAt(1, p1, 0, 0, 0);
-        //        PL1.AddVertexAt(2, p2, 0, 0, 0);
-        //        PL1.AddVertexAt(3, p3, 0, 0, 0);
-        //        PL1.Layer = "图框";
-        //        PL1.Closed = true;
-        //        ps.AppendEntity(PL1);
-        //        tr.AddNewlyCreatedDBObject(PL1, true);
-        //        p0 = new Point2d(30, 10);
-        //        p1 = HanDong.Convert2d(p0,420-40,0);
-        //        p2 = HanDong.Convert2d(p1, 0,297-20);
-        //        p3= HanDong.Convert2d(p0, 0, 297 - 20);
-        //        Polyline PL2 = new Polyline();
-        //        PL2.AddVertexAt(0, p0, 0, 0, 0);
-        //        PL2.AddVertexAt(1, p1, 0, 0, 0);
-        //        PL2.AddVertexAt(2, p2, 0, 0, 0);
-        //        PL2.AddVertexAt(3, p3, 0, 0, 0);
-        //        PL2.Layer = "图框";
-        //        PL2.ColorIndex = 1;
-        //        PL2.Closed = true;
-        //        ps.AppendEntity(PL2);
-        //        tr.AddNewlyCreatedDBObject(PL2, true);               
+    //        Point2d p0 = new Point2d(0, 0);
+    //        Point2d p1 = HanDong.Convert2d(p0, 420, 0);
+    //        Point2d p2 = HanDong.Convert2d(p1, 0,297);
+    //        Point2d p3 = HanDong.Convert2d(p2,-420,0);
+    //        Polyline PL1 = new Polyline();
+    //        PL1.AddVertexAt(0, p0, 0, 0, 0);
+    //        PL1.AddVertexAt(1, p1, 0, 0, 0);
+    //        PL1.AddVertexAt(2, p2, 0, 0, 0);
+    //        PL1.AddVertexAt(3, p3, 0, 0, 0);
+    //        PL1.Layer = "图框";
+    //        PL1.Closed = true;
+    //        ps.AppendEntity(PL1);
+    //        tr.AddNewlyCreatedDBObject(PL1, true);
+    //        p0 = new Point2d(30, 10);
+    //        p1 = HanDong.Convert2d(p0,420-40,0);
+    //        p2 = HanDong.Convert2d(p1, 0,297-20);
+    //        p3= HanDong.Convert2d(p0, 0, 297 - 20);
+    //        Polyline PL2 = new Polyline();
+    //        PL2.AddVertexAt(0, p0, 0, 0, 0);
+    //        PL2.AddVertexAt(1, p1, 0, 0, 0);
+    //        PL2.AddVertexAt(2, p2, 0, 0, 0);
+    //        PL2.AddVertexAt(3, p3, 0, 0, 0);
+    //        PL2.Layer = "图框";
+    //        PL2.ColorIndex = 1;
+    //        PL2.Closed = true;
+    //        ps.AppendEntity(PL2);
+    //        tr.AddNewlyCreatedDBObject(PL2, true);               
 
-        //        tr.Commit();
-        //    }
-            
-        //    // Zoom so that we can see our new layout, again with a little padding
+    //        tr.Commit();
+    //    }
 
-        //    ed.Command("_.ZOOM", "_E");
-        //    ed.Command("_.ZOOM", ".7X");
-        //    ed.Regen();
-        //}
+    //    // Zoom so that we can see our new layout, again with a little padding
 
-
-
-        // Returns whether the provided DB extents - retrieved from
-
-        // Database.Extmin/max - are "valid" or whether they are the default
-
-        // invalid values (where the min's coordinates are positive and the
-
-        // max coordinates are negative)
+    //    ed.Command("_.ZOOM", "_E");
+    //    ed.Command("_.ZOOM", ".7X");
+    //    ed.Regen();
+    //}
 
 
 
-  //      private bool ValidDbExtents(Point3d min, Point3d max)
-       // {
-     //       return
-   //           !(min.X > 0 && min.Y > 0 && min.Z > 0 && max.X < 0 && max.Y < 0 && max.Z < 0);
-     //   }
-   // }
+    // Returns whether the provided DB extents - retrieved from
+
+    // Database.Extmin/max - are "valid" or whether they are the default
+
+    // invalid values (where the min's coordinates are positive and the
+
+    // max coordinates are negative)
+
+
+
+    //      private bool ValidDbExtents(Point3d min, Point3d max)
+    // {
+    //       return
+    //           !(min.X > 0 && min.Y > 0 && min.Z > 0 && max.X < 0 && max.Y < 0 && max.Z < 0);
+    //   }
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

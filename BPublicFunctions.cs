@@ -24,13 +24,14 @@ namespace MyCAD1
         /// </summary>
         /// <param name="PromptOpts">对话框标题</param>
         /// <returns></returns>
-        public static string GetXPath(string PromptOpts)
+        public static string GetXPath(string PromptOpts,string FilterStr="Excel文件|*.xls;*.xlsx")
         {
             string xpath = "";
             WFM.OpenFileDialog dialog = new WFM.OpenFileDialog();
             dialog.Title = PromptOpts;
+
             dialog.InitialDirectory = "G:\\涵洞自动成图程序";
-            //dialog.Filter = "ext files (*.xls)|*.xls|All files(*.*)|*>**";
+            dialog.Filter = FilterStr;
             //dialog.FilterIndex = 2;
             dialog.RestoreDirectory = true;
             if (dialog.ShowDialog() == WFM.DialogResult.OK)
@@ -44,6 +45,13 @@ namespace MyCAD1
             
             return xpath;
         }
+
+
+
+
+
+
+
 
 
     }

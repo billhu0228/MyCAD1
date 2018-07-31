@@ -440,5 +440,411 @@ namespace MyCAD1
             }            
             return PL1;
         }
+
+
+
+
+
+
+
+        public static Polyline PlotWellPlan(Database db, Line[] LSet, double width, bool isLeft)
+        {
+            Polyline SideWall = new Polyline();
+            Polyline inSideWall;
+            Polyline Cover, Shoulder;            
+            Point2d p0, p1, p2, p3, p4, p5, p6, p7;
+            Point2d ap1, ap2;
+            int dirx = isLeft ? -1 : 1;
+            if (isLeft)
+            {
+                ap1 = LSet[0].StartPoint.Convert2D();
+                ap2 = LSet[LSet.Length - 1].StartPoint.Convert2D();
+            }
+            else
+            {
+                ap1 = LSet[0].EndPoint.Convert2D();
+                ap2 = LSet[LSet.Length - 1].EndPoint.Convert2D();
+            }
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+
+
+                Shoulder = new Polyline();
+                p0 = ap1;
+                p1 = ap2;
+                p2 = p1.Convert2D(dirx * 200);
+                p3 = p0.Convert2D(dirx * 200);
+                Shoulder.AddVertexAt(0, p0, 0, 0, 0);
+                Shoulder.AddVertexAt(1, p1, 0, 0, 0);
+                Shoulder.AddVertexAt(2, p2, 0, 0, 0);
+                Shoulder.AddVertexAt(3, p3, 0, 0, 0);
+                Shoulder.Layer = "细线";
+                Shoulder.Closed = true;
+                modelSpace.AppendEntity(Shoulder);
+                tr.AddNewlyCreatedDBObject(Shoulder, true);
+
+                if (width == 1900)
+                {
+                    SideWall = new Polyline();
+                    p0 = ap1.Convert2D(dirx * 200);
+                    p1 = ap1.Convert2D(dirx * 1850);
+                    p2 = ap2.Convert2D(dirx * 1850);
+                    p3 = ap2.Convert2D(dirx * 200);
+                    SideWall.AddVertexAt(0, p0, 0, 0, 0);
+                    SideWall.AddVertexAt(1, p1, 0, 0, 0);
+                    SideWall.AddVertexAt(2, p2, 0, 0, 0);
+                    SideWall.AddVertexAt(3, p3, 0, 0, 0);
+                    SideWall.Layer = "细线";
+                    SideWall.Closed = false;
+                    modelSpace.AppendEntity(SideWall);
+                    tr.AddNewlyCreatedDBObject(SideWall, true);
+
+                    inSideWall = new Polyline();
+                    p0 = p0.Convert2D(0, 200);
+                    p1 = p1.Convert2D(-dirx * 200, 200);
+                    p2 = p2.Convert2D(-dirx * 200, -200);
+                    p3 = p3.Convert2D(0, -200);                    
+                    inSideWall.AddVertexAt(0, p0, 0, 0, 0);
+                    inSideWall.AddVertexAt(1, p1, 0, 0, 0);
+                    inSideWall.AddVertexAt(2, p2, 0, 0, 0);
+                    inSideWall.AddVertexAt(3, p3, 0, 0, 0);
+                    inSideWall.Layer = "虚线";
+                    inSideWall.Closed = false;
+                    modelSpace.AppendEntity(inSideWall);
+                    tr.AddNewlyCreatedDBObject(inSideWall, true);
+
+                    for(int i = 0; i < 3; i++)
+                    {
+                        double x0 = dirx * (220 + 1550);
+                        double y0 = 180 + i * 520;
+                        Cover = new Polyline();
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0, y0), 0, 0, 0);
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0 - dirx * 1550, y0), 0, 0, 0);
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0 - dirx * 1550, y0 + 500), 0, 0, 0);
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0, y0 + 500), 0, 0, 0);
+                        Cover.Layer = "细线";
+                        Cover.Closed = true;
+                        modelSpace.AppendEntity(Cover);
+                        tr.AddNewlyCreatedDBObject(Cover, true);
+                    }
+
+                }
+                else
+                {
+                    SideWall = new Polyline();
+                    p0 = ap1.Convert2D(dirx * 200);
+                    p1 = ap1.Convert2D(dirx * 1900);
+                    p2 = ap2.Convert2D(dirx * 1900);
+                    p3 = ap2.Convert2D(dirx * 200);
+                    SideWall.AddVertexAt(0, p0, 0, 0, 0);
+                    SideWall.AddVertexAt(1, p1, 0, 0, 0);
+                    SideWall.AddVertexAt(2, p2, 0, 0, 0);
+                    SideWall.AddVertexAt(3, p3, 0, 0, 0);
+                    SideWall.Layer = "细线";
+                    SideWall.Closed = false;
+                    modelSpace.AppendEntity(SideWall);
+                    tr.AddNewlyCreatedDBObject(SideWall, true);
+
+                    inSideWall = new Polyline();
+                    p0 = p0.Convert2D(0, 250);
+                    p1 = p1.Convert2D(-dirx * 250, 250);
+                    p2 = p2.Convert2D(-dirx * 250, -250);
+                    p3 = p3.Convert2D(0, -250);
+                    inSideWall.AddVertexAt(0, p0, 0, 0, 0);
+                    inSideWall.AddVertexAt(1, p1, 0, 0, 0);
+                    inSideWall.AddVertexAt(2, p2, 0, 0, 0);
+                    inSideWall.AddVertexAt(3, p3, 0, 0, 0);
+                    inSideWall.Layer = "虚线";
+                    inSideWall.Closed = false;
+                    modelSpace.AppendEntity(inSideWall);
+                    tr.AddNewlyCreatedDBObject(inSideWall, true);
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        double x0 = dirx * (220 + 1550);
+                        double y0 = 220 + i * 520;
+                        Cover = new Polyline();
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0, y0), 0, 0, 0);
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0 - dirx * 1550, y0), 0, 0, 0);
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0 - dirx * 1550, y0 + 500), 0, 0, 0);
+                        Cover.AddVertexAt(0, ap1.Convert2D(x0, y0 + 500), 0, 0, 0);
+                        Cover.Layer = "细线";
+                        Cover.Closed = true;
+                        modelSpace.AppendEntity(Cover);
+                        tr.AddNewlyCreatedDBObject(Cover, true);
+                    }
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                tr.Commit();
+            }
+                return SideWall;
+        }
+
+
+
+
+        /// <summary>
+        /// 绘制集水井立面
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="AnchorPoint">最表面点角点（Lsets[1].startpoint）</param>
+        /// <param name="height"></param>
+        /// <param name="rotAngle"></param>
+        /// <param name="isLeft"></param>
+        /// <param name="ss">标注比例</param>
+        public static Polyline PlotWell(Database db, Point2d AnchorPoint,double slop, double height,bool isLeft,bool isBianGouTri)
+        {
+            Polyline BottomWall = new Polyline();
+            Polyline Cover,Shoulder;
+            Polyline BianGou;
+            Point2d p0, p1, p2, p3, p4, p5, p6, p7;
+
+            using(Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+                double absslop = Math.Abs(slop);
+                double redslop = Math.Atan(absslop);
+                double L = 0;
+                int dirx = isLeft ? -1 : 1;
+                
+                switch (height)
+                {
+                    case (2000):
+                        {
+                            // 底板、边板
+                            p0 = AnchorPoint.Convert2D(dirx*250*Math.Sin(redslop),-250 * Math.Cos(redslop));
+                            p1 = AnchorPoint.Convert2D(dirx * 1900,-250);
+                            p2 = p1.Convert2D(0,2000);
+                            p3 = p2.Convert2D(-dirx * 250,0);
+                            p4 = p3.Convert2D(0,-1750);
+                            p5 = AnchorPoint;
+                            BottomWall = new Polyline();
+                            BottomWall.AddVertexAt(0, p0, 0, 0, 0);
+                            BottomWall.AddVertexAt(1, p1, 0, 0, 0);
+                            BottomWall.AddVertexAt(2, p2, 0, 0, 0);
+                            BottomWall.AddVertexAt(3, p3, 0, 0, 0);
+                            BottomWall.AddVertexAt(4, p4, 0, 0, 0);
+                            BottomWall.AddVertexAt(5, p5, 0, 0, 0);
+                            BottomWall.Layer = "细线";
+                            BottomWall.Closed = true;
+                            modelSpace.AppendEntity(BottomWall);
+                            tr.AddNewlyCreatedDBObject(BottomWall, true);
+                            
+                            // 盖板
+                            p0 = p2.Convert2D(-dirx*130, 0);
+                            p1 = p0.Convert2D(-dirx * (1420 + 130), 0);
+                            p2 = p1.Convert2D(0, 100);
+                            p3 = p0.Convert2D(0, 100);
+                            Cover = new Polyline();
+                            Cover.AddVertexAt(0, p0, 0, 0, 0);
+                            Cover.AddVertexAt(1, p1, 0, 0, 0);
+                            Cover.AddVertexAt(2, p2, 0, 0, 0);
+                            Cover.AddVertexAt(3, p3, 0, 0, 0);
+                            Cover.Layer = "细线";
+                            Cover.Closed = true;
+                            modelSpace.AppendEntity(Cover);
+                            tr.AddNewlyCreatedDBObject(Cover, true);
+
+                            p0 = p1.Convert2D(dirx * 130, 0);
+                            p1 = p0.Convert2D(0, -250);
+                            p2 = p1.Convert2D(-dirx * 350);
+                            p3 = p2.Convert2D(0, 550);
+                            p4 = p3.Convert2D(dirx * 200);
+                            p5 = p4.Convert2D(0, -300);
+                            Shoulder = new Polyline();
+                            Shoulder.AddVertexAt(0, p0, 0, 0, 0);
+                            Shoulder.AddVertexAt(1, p1, 0, 0, 0);
+                            Shoulder.AddVertexAt(2, p2, 0, 0, 0);
+                            Shoulder.AddVertexAt(3, p3, 0, 0, 0);
+                            Shoulder.AddVertexAt(4, p4, 0, 0, 0);
+                            Shoulder.AddVertexAt(5, p5, 0, 0, 0);
+                            Shoulder.Layer = "细线";
+                            Shoulder.Closed = true;
+                            modelSpace.AppendEntity(Shoulder);
+                            tr.AddNewlyCreatedDBObject(Shoulder, true);
+
+                            // 边沟
+                            if (isBianGouTri)
+                            {
+                                BianGou = new Polyline();
+                                p2 = p0.Convert2D(dirx * 230);
+                                p1 = p2.Convert2D(dirx * 602.3077, -401.5385);
+                                p0 = p2.Convert2D(dirx * 870);
+                                BianGou.AddVertexAt(0, p0, 0, 0, 0);
+                                BianGou.AddVertexAt(1, p1, 0, 0, 0);
+                                BianGou.AddVertexAt(2, p2, 0, 0, 0);
+                                BianGou.Layer = "细线";
+                                BianGou.Closed = false;
+                                modelSpace.AppendEntity(BianGou);
+                                tr.AddNewlyCreatedDBObject(BianGou, true);
+                            }
+                            else
+                            {
+                                BianGou = new Polyline();
+                                p3 = p0.Convert2D(dirx * 250);
+                                p2 = p3.Convert2D(0, -650);
+                                p1 = p2.Convert2D(dirx * 800);
+                                p0 = p1.Convert2D(0,650);
+                                BianGou.AddVertexAt(0, p0, 0, 0, 0);
+                                BianGou.AddVertexAt(1, p1, 0, 0, 0);
+                                BianGou.AddVertexAt(2, p2, 0, 0, 0);
+                                BianGou.AddVertexAt(3, p3, 0, 0, 0);
+                                BianGou.Layer = "细线";
+                                BianGou.Closed = false;
+                                modelSpace.AppendEntity(BianGou);
+                                tr.AddNewlyCreatedDBObject(BianGou, true);
+                            }
+
+
+
+
+                            break;
+                        }
+                    case (1400):
+                        {
+                            p0 = AnchorPoint.Convert2D(dirx * 200 * Math.Sin(redslop), -200 * Math.Cos(redslop));
+                            p1 = AnchorPoint.Convert2D(dirx * 1850, -200);
+                            p2 = p1.Convert2D(0, 1400);
+                            p3 = p2.Convert2D(-dirx * 200, 0);
+                            p4 = p3.Convert2D(0, -1200);
+                            p5 = AnchorPoint;
+                            BottomWall = new Polyline();
+                            BottomWall.AddVertexAt(0, p0, 0, 0, 0);
+                            BottomWall.AddVertexAt(1, p1, 0, 0, 0);
+                            BottomWall.AddVertexAt(2, p2, 0, 0, 0);
+                            BottomWall.AddVertexAt(3, p3, 0, 0, 0);
+                            BottomWall.AddVertexAt(4, p4, 0, 0, 0);
+                            BottomWall.AddVertexAt(5, p5, 0, 0, 0);
+                            BottomWall.Layer = "细线";
+                            BottomWall.Closed = true;
+                            modelSpace.AppendEntity(BottomWall);
+                            tr.AddNewlyCreatedDBObject(BottomWall, true);
+
+                            p0 = p2.Convert2D(-dirx * 80, 0);
+                            p1 = p0.Convert2D(-dirx * (1420 + 130), 0);
+                            p2 = p1.Convert2D(0, 100);
+                            p3 = p0.Convert2D(0, 100);
+                            Cover = new Polyline();
+                            Cover.AddVertexAt(0, p0, 0, 0, 0);
+                            Cover.AddVertexAt(1, p1, 0, 0, 0);
+                            Cover.AddVertexAt(2, p2, 0, 0, 0);
+                            Cover.AddVertexAt(3, p3, 0, 0, 0);
+                            Cover.Layer = "细线";
+                            Cover.Closed = true;
+                            modelSpace.AppendEntity(Cover);
+                            tr.AddNewlyCreatedDBObject(Cover, true);
+                            // 牛腿
+                            Shoulder = new Polyline();
+                            p0 = p1.Convert2D(dirx * 130, 0);
+                            p1 = p0.Convert2D(0, -200);
+                            p2 = p1.Convert2D(-dirx * 350);
+                            p3 = p2.Convert2D(0, 500);
+                            p4 = p3.Convert2D(dirx * 200);
+                            p5 = p4.Convert2D(0, -300);             
+                            Shoulder.AddVertexAt(0, p0, 0, 0, 0);
+                            Shoulder.AddVertexAt(1, p1, 0, 0, 0);
+                            Shoulder.AddVertexAt(2, p2, 0, 0, 0);
+                            Shoulder.AddVertexAt(3, p3, 0, 0, 0);
+                            Shoulder.AddVertexAt(4, p4, 0, 0, 0);
+                            Shoulder.AddVertexAt(5, p5, 0, 0, 0);
+                            Shoulder.Layer = "细线";
+                            Shoulder.Closed = true;
+                            modelSpace.AppendEntity(Shoulder);
+                            tr.AddNewlyCreatedDBObject(Shoulder, true);
+
+                            // 边沟
+                            if (isBianGouTri)
+                            {
+                                BianGou = new Polyline();
+                                p2 = p0.Convert2D(dirx * 230);
+                                p1 = p2.Convert2D(dirx * 602.3077, -401.5385);
+                                p0 = p2.Convert2D(dirx * 870);
+                                BianGou.AddVertexAt(0, p0, 0, 0, 0);
+                                BianGou.AddVertexAt(1, p1, 0, 0, 0);
+                                BianGou.AddVertexAt(2, p2, 0, 0, 0);
+                                BianGou.Layer = "细线";
+                                BianGou.Closed = false;
+                                modelSpace.AppendEntity(BianGou);
+                                tr.AddNewlyCreatedDBObject(BianGou, true);
+                            }
+                            else
+                            {
+                                BianGou = new Polyline();
+                                p3 = p0.Convert2D(dirx * 250);
+                                p2 = p3.Convert2D(0, -650);
+                                p1 = p2.Convert2D(dirx * 800);
+                                p0 = p1.Convert2D(0, 650);
+                                BianGou.AddVertexAt(0, p0, 0, 0, 0);
+                                BianGou.AddVertexAt(1, p1, 0, 0, 0);
+                                BianGou.AddVertexAt(2, p2, 0, 0, 0);
+                                BianGou.AddVertexAt(3, p3, 0, 0, 0);
+                                BianGou.Layer = "细线";
+                                BianGou.Closed = false;
+                                modelSpace.AppendEntity(BianGou);
+                                tr.AddNewlyCreatedDBObject(BianGou, true);
+                            }
+
+
+
+
+
+
+
+
+                            break;
+                        }
+
+                }
+
+
+
+
+
+
+
+
+
+                tr.Commit();
+            }
+
+            return BottomWall;
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

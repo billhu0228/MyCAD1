@@ -84,12 +84,13 @@ namespace MyCAD1
                         acCurDb.LoadLineTypeFile(ltname, "acad.lin");
                     }
                 }
+                LayerTableRecord acLyrTblRec = new LayerTableRecord();
                 foreach (string key in ldic.Keys)
                 {
                     short cid = ldic[key];
-                    LayerTableRecord acLyrTblRec = new LayerTableRecord();
+                    acLyrTblRec = new LayerTableRecord();
                     if (!acLyrTbl.Has(key))
-                    {                        
+                    {
                         acLyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, cid);
                         if (cid != 4) { acLyrTblRec.LineWeight = LineWeight.LineWeight013; }
                         else { acLyrTblRec.LineWeight = LineWeight.LineWeight030; }
@@ -112,6 +113,28 @@ namespace MyCAD1
                         if (cid == 8) { acLyrTblRec.IsPlottable = false; }
                     }
                 }
+                if (!acLyrTbl.Has("sjx"))
+                {
+                    acLyrTblRec = new LayerTableRecord();
+                    acLyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 1);
+                    acLyrTblRec.Name = "sjx";
+                    acLyrTblRec.LineWeight = LineWeight.LineWeight015;
+                    if (acLyrTbl.IsWriteEnabled == false) acLyrTbl.UpgradeOpen();
+                    acLyrTbl.Add(acLyrTblRec);
+                    tr.AddNewlyCreatedDBObject(acLyrTblRec, true);
+                }
+                if (!acLyrTbl.Has("dmx"))
+                {
+                    acLyrTblRec = new LayerTableRecord();
+                    acLyrTblRec.Color = Color.FromColorIndex(ColorMethod.ByAci, 8);
+                    acLyrTblRec.Name = "dmx";
+                    acLyrTblRec.LineWeight = LineWeight.LineWeight015;
+                    if (acLyrTbl.IsWriteEnabled == false) acLyrTbl.UpgradeOpen();
+                    acLyrTbl.Add(acLyrTblRec);
+                    tr.AddNewlyCreatedDBObject(acLyrTblRec, true);
+                }
+
+
                 //-------------------------------------------------------------------------------------------
                 TextStyleTable st = tr.GetObject(acCurDb.TextStyleTableId, OpenMode.ForWrite) as TextStyleTable;
                 if(!st.Has("EN"))
@@ -497,15 +520,39 @@ namespace MyCAD1
                 {
                     ed.WriteMessage("\n共选择{0}个直线，合计长度{1:0.0}", counter, sumup);
                 }
-
                 tr.Commit();               
-
             }
-
-
-
         }
 
+
+
+        [CommandMethod("XAO")]
+        public void XrefAttachAtOrigin()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+                return;
+            var db = doc.Database;
+            var ed = doc.Editor;
+
+            // Ask the user to specify a file to attach
+
+            var opts = new PromptOpenFileOptions("Select Reference File");
+            opts.Filter = "Drawing (*.dwg)|*.dwg";
+            var pr = ed.GetFileNameForOpen(opts);
+
+            if (pr.Status == PromptStatus.OK)
+            {
+                // Attach the specified file and insert it at the origin
+
+                var res = db.XrefAttachAndInsert(pr.StringResult,db.CurrentSpaceId ,Point3d.Origin);
+
+                ed.WriteMessage(
+                         "External reference {0}attached at the origin.",
+                           res ? "" : "not "
+                         );
+            }
+        }
 
 
 
