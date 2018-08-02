@@ -554,7 +554,8 @@ namespace MyCAD1
             
             Line[] Lset = new Line[2];
             Polyline[] PLset = new Polyline[2];
-            double ang = StartPoint.X == EndPoint.X ? 0.5 * Math.PI : 0;
+            double ang = new Line2d(StartPoint, EndPoint).Direction.Angle;               
+                
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
@@ -590,39 +591,72 @@ namespace MyCAD1
                     Line L;
                     Polyline PL=new Polyline();
                     Point2d p0=new Point2d(), p1=new Point2d();
-                    if (ang==0)
-                    {
-                        L = i == 0 ? new Line(StartPoint.Convert3D(-1 * scale, 0), StartPoint.Convert3D(1 * scale, 0)) :
-                            new Line(EndPoint.Convert3D(-1 * scale, 0), EndPoint.Convert3D(1 * scale, 0));
-                        p0 = i==0?StartPoint:EndPoint;
-                        p1 = i==0?StartPoint.Convert2D(0, -1 * scale):EndPoint.Convert2D(0, -1 * scale);
-                    }
-                    else
-                    {
-                        L = i == 0 ? new Line(StartPoint.Convert3D(0, -1 * scale), StartPoint.Convert3D(0, 1 * scale)) :
-                            new Line(EndPoint.Convert3D(0, -1 * scale), EndPoint.Convert3D(0, 1 * scale));
-                        p0 = i == 0 ? StartPoint : EndPoint;
-                        p1 = i == 0 ? StartPoint.Convert2D(1 * scale,0): EndPoint.Convert2D(1 * scale, 0);
-                    }
+
+                    L = i == 0 ? new Line(StartPoint.Convert3D(-1 * scale, 0), StartPoint.Convert3D(1 * scale, 0)) :
+                        new Line(EndPoint.Convert3D(-1 * scale, 0), EndPoint.Convert3D(1 * scale, 0));
+                    p0 = i == 0 ? StartPoint : EndPoint;
+                    p1 = i == 0 ? StartPoint.Convert2D(0, -1 * scale) : EndPoint.Convert2D(0, -1 * scale);
+
                     L.Layer = "标注";
-                    L.ColorIndex = 1;
+                    L.ColorIndex = 1;                    
+                    L.TransformBy(Matrix3d.Rotation(ang,Vector3d.ZAxis,p0.Convert3D()));
                     modelSpace.AppendEntity(L);
                     tr.AddNewlyCreatedDBObject(L, true);
 
                     PL.AddVertexAt(0,p0, 0, 0, 1.5*scale);
                     PL.AddVertexAt(1, p1, 0, 0, 0);
+                    PL.TransformBy(Matrix3d.Rotation(ang, Vector3d.ZAxis, p0.Convert3D()));
                     modelSpace.AppendEntity(PL);
                     tr.AddNewlyCreatedDBObject(PL, true);
-
-
-
-
-
                 }
                 tr.Commit();
             }
 
         }
+
+        public static void DimRoadDirect(Database db, Point2d AnchorPoint, double scale,bool isUp)
+        {
+            Polyline Arrow=new Polyline();
+            DBText txt=new DBText();
+            int diry = isUp ? 1 : -1;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+                txt.TextString =isUp?"DABAOLA":"COYAH";
+                txt.Layer = "标注";
+                txt.Height = 3 * scale;
+                txt.TextStyleId = st["fsdb"];
+                txt.Position = AnchorPoint.Convert3D();
+                txt.HorizontalMode = TextHorizontalMode.TextMid;
+                txt.VerticalMode = isUp?TextVerticalMode.TextBottom:TextVerticalMode.TextTop;
+                txt.AlignmentPoint = AnchorPoint.Convert3D(0,1.2*scale*diry);
+                txt.WidthFactor = 0.75;
+                modelSpace.AppendEntity(txt);
+                tr.AddNewlyCreatedDBObject(txt, true);      
+                Point2d p0 = AnchorPoint;
+                Point2d p1 = p0.Convert2D(0, -diry * 7.5 * scale);
+                Point2d p2 = p1.Convert2D(-1 * scale);
+                Point2d p3 = p2.Convert2D(0, diry * 3.5 * scale);
+                Point2d p4 = p3.Convert2D(-1.5 * scale);
+                Arrow.AddVertexAt(0, p0, 0, 0, 0);
+                Arrow.AddVertexAt(1, p1, 0, 0, 0);
+                Arrow.AddVertexAt(2, p2, 0, 0, 0);
+                Arrow.AddVertexAt(3, p3, 0, 0, 0);
+                Arrow.AddVertexAt(4, p4, 0, 0, 0);
+                Arrow.Layer = "标注";
+                Arrow.Closed = true;
+                modelSpace.AppendEntity(Arrow);
+                tr.AddNewlyCreatedDBObject(Arrow, true);
+                tr.Commit();
+            }
+
+        }
+
+
 
 
 

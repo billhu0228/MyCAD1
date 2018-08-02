@@ -292,7 +292,11 @@ namespace MyCAD1
         }
 
         
-
+        public static Point2d MoveDistance(this Point2d theP2d,Vector2d theVec,double dist)
+        {
+            Vector2d newVec = new Vector2d(dist * Math.Cos(theVec.Angle), dist * Math.Sin(theVec.Angle));            
+            return theP2d.TransformBy(Matrix2d.Displacement(newVec));
+        }
 
         public static double GetK(this Line cL)
         {

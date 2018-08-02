@@ -267,6 +267,8 @@ namespace MyCAD1
             Line temp;
             Point3dCollection pts = new Point3dCollection();
             Point2d UpperPt, LowerPt,UpperPt2,LowerPt2;
+            double ang_red = LSet[0].Angle;
+
             if (isLeft)
             {
                 LowerPt = LSet[0].StartPoint.Convert2D();
@@ -290,7 +292,7 @@ namespace MyCAD1
                     OpenMode.ForWrite) as BlockTableRecord;
 
                 int direct = isLeft ? -1 : 1;
-                double dy = UpperPt.Y - LowerPt.Y;
+                double dy = (UpperPt.Y - LowerPt.Y)/Math.Cos(ang_red);
                 double dy2 = 0;
                 double thick,Wall_width,Wall_thick,Mouth_thick;
 
@@ -338,12 +340,15 @@ namespace MyCAD1
                 PL1.AddVertexAt(3, p3, 0, 0, 0);
                 PL1.AddVertexAt(4, p4, 0, 0, 0);
                 PL1.AddVertexAt(5, p5, 0, 0, 0);
+                PL1.TransformBy(Matrix3d.Rotation(ang_red, Vector3d.ZAxis, LowerPt.Convert3D()));
                 modelSpace.AppendEntity(PL1);
                 tr.AddNewlyCreatedDBObject(PL1, true);
                 
+                
                 //  拐角
                 temp = new Line(PL1.GetPoint3dAt(4), PL1.GetPoint3dAt(5));
-                temp.TransformBy(Matrix3d.Displacement(new Vector3d(-direct * Mouth_thick, 0, 0)));
+                temp.TransformBy(Matrix3d.Displacement(new Vector3d(-direct * Mouth_thick*Math.Cos(ang_red), 
+                    -direct * Mouth_thick * Math.Cos(ang_red)*Math.Sin(ang_red), 0)));
                 temp.IntersectWith(PL1, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
                 p0 = PL1.GetPoint2dAt(4);
                 p1 = temp.StartPoint.Convert2D();
@@ -368,24 +373,29 @@ namespace MyCAD1
                 // 上内墙
                 pts = new Point3dCollection();
                 temp = new Line(PL1.GetPoint3dAt(3), PL1.GetPoint3dAt(4));
-                temp.TransformBy(Matrix3d.Displacement(new Vector3d(0, -Wall_thick / Math.Cos(30.0 / 180.0 * Math.PI), 0)));
+                temp=(Line)temp.GetOffsetCurves(-Wall_thick*direct)[0];
                 temp.IntersectWith(LSet[LSet.Length - 2], Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
                 p0 = UpperPt2;
                 p1 = pts[0].Convert2D();
-                p2 = temp.EndPoint.Convert2D();
+                pts.Clear();
+                temp.IntersectWith(PL1.GetLine(4), Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                p2 = pts[0].Convert2D();                                
                 PL4.AddVertexAt(0, p0, 0, 0, 0);
                 PL4.AddVertexAt(1, p1, 0, 0, 0);
                 PL4.AddVertexAt(2, p2, 0, 0, 0);
                 modelSpace.AppendEntity(PL4);
                 tr.AddNewlyCreatedDBObject(PL4, true);
 
-                pts = new Point3dCollection();
+                pts.Clear();
                 temp = new Line(PL1.GetPoint3dAt(0), PL1.GetPoint3dAt(5));
-                temp.TransformBy(Matrix3d.Displacement(new Vector3d(0, Wall_thick / Math.Cos(30.0 / 180.0 * Math.PI), 0)));
+                temp = (Line)temp.GetOffsetCurves(Wall_thick * direct)[0];
+                //temp.TransformBy(Matrix3d.Displacement(new Vector3d(0, Wall_thick / Math.Cos(30.0 / 180.0 * Math.PI), 0)));
                 temp.IntersectWith(LSet[1], Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
                 p0 = LowerPt2;
                 p1 = pts[0].Convert2D();
-                p2 = temp.EndPoint.Convert2D();
+                pts.Clear();
+                temp.IntersectWith(PL1.GetLine(4), Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                p2 = pts[0].Convert2D();
                 PL5.AddVertexAt(0, p0, 0, 0, 0);
                 PL5.AddVertexAt(1, p1, 0, 0, 0);
                 PL5.AddVertexAt(2, p2, 0, 0, 0);
@@ -475,6 +485,9 @@ namespace MyCAD1
             Polyline Cover, Shoulder;            
             Point2d p0, p1, p2, p3, p4, p5, p6, p7;
             Point2d ap1, ap2;
+            double ang_red = LSet[0].Angle;
+            Vector2d theDalotDir = new Vector2d(Math.Cos(ang_red), Math.Sin(ang_red));
+            Vector2d XtheDalotDir = new Vector2d(Math.Cos(ang_red+0.5*Math.PI), Math.Sin(ang_red + 0.5 * Math.PI));
             int dirx = isLeft ? -1 : 1;
             if (isLeft)
             {
@@ -492,14 +505,14 @@ namespace MyCAD1
                 BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                 BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                     OpenMode.ForWrite) as BlockTableRecord;
-
-
-
+                
                 Shoulder = new Polyline();
                 p0 = ap1;
                 p1 = ap2;
-                p2 = p1.Convert2D(dirx * 200);
+                p2 = p1.MoveDistance(theDalotDir, dirx * 200);
+                //p2 = p1.Convert2D(dirx * 200);
                 p3 = p0.Convert2D(dirx * 200);
+                p3 = p0.MoveDistance(theDalotDir, dirx * 200);
                 Shoulder.AddVertexAt(0, p0, 0, 0, 0);
                 Shoulder.AddVertexAt(1, p1, 0, 0, 0);
                 Shoulder.AddVertexAt(2, p2, 0, 0, 0);
@@ -511,11 +524,15 @@ namespace MyCAD1
 
                 if (width == 1900)
                 {
-                    SideWall = new Polyline();
-                    p0 = ap1.Convert2D(dirx * 200);
-                    p1 = ap1.Convert2D(dirx * 1850);
-                    p2 = ap2.Convert2D(dirx * 1850);
-                    p3 = ap2.Convert2D(dirx * 200);
+                    SideWall = new Polyline();                    
+                    p0 = ap1.MoveDistance(theDalotDir, dirx * 200);
+                    p1 = ap1.MoveDistance(theDalotDir,dirx * 1850);
+                    p2 = ap2.MoveDistance(theDalotDir,dirx * 1850);
+                    p3 = ap2.MoveDistance(theDalotDir,dirx * 200);
+                    //p0 = ap1.Convert2D(dirx * 200);
+                    //p1 = ap1.Convert2D(dirx * 1850);
+                    //p2 = ap2.Convert2D(dirx * 1850);
+                    //p3 = ap2.Convert2D(dirx * 200);
                     SideWall.AddVertexAt(0, p0, 0, 0, 0);
                     SideWall.AddVertexAt(1, p1, 0, 0, 0);
                     SideWall.AddVertexAt(2, p2, 0, 0, 0);
@@ -526,10 +543,10 @@ namespace MyCAD1
                     tr.AddNewlyCreatedDBObject(SideWall, true);
 
                     inSideWall = new Polyline();
-                    p0 = p0.Convert2D(0, 200);
-                    p1 = p1.Convert2D(-dirx * 200, 200);
-                    p2 = p2.Convert2D(-dirx * 200, -200);
-                    p3 = p3.Convert2D(0, -200);                    
+                    p0 = p0.MoveDistance(XtheDalotDir, 200);
+                    p1 = p0.MoveDistance(theDalotDir, dirx*1450);
+                    p2 = p1.MoveDistance(XtheDalotDir ,1500);
+                    p3 = p2.MoveDistance(theDalotDir, -dirx * 1450);                    
                     inSideWall.AddVertexAt(0, p0, 0, 0, 0);
                     inSideWall.AddVertexAt(1, p1, 0, 0, 0);
                     inSideWall.AddVertexAt(2, p2, 0, 0, 0);
@@ -550,18 +567,20 @@ namespace MyCAD1
                         Cover.AddVertexAt(0, ap1.Convert2D(x0, y0 + 500), 0, 0, 0);
                         Cover.Layer = "细线";
                         Cover.Closed = true;
+                        Cover.TransformBy(Matrix3d.Rotation(ang_red, Vector3d.ZAxis, ap1.Convert3D()));
                         modelSpace.AppendEntity(Cover);
                         tr.AddNewlyCreatedDBObject(Cover, true);
+                        
                     }
 
                 }
                 else
                 {
                     SideWall = new Polyline();
-                    p0 = ap1.Convert2D(dirx * 200);
-                    p1 = ap1.Convert2D(dirx * 1900);
-                    p2 = ap2.Convert2D(dirx * 1900);
-                    p3 = ap2.Convert2D(dirx * 200);
+                    p0 = ap1.MoveDistance(theDalotDir,dirx * 200);
+                    p1 = ap1.MoveDistance(theDalotDir,dirx * 1900);
+                    p2 = ap2.MoveDistance(theDalotDir,dirx * 1900);
+                    p3 = ap2.MoveDistance(theDalotDir,dirx * 200);
                     SideWall.AddVertexAt(0, p0, 0, 0, 0);
                     SideWall.AddVertexAt(1, p1, 0, 0, 0);
                     SideWall.AddVertexAt(2, p2, 0, 0, 0);
@@ -596,6 +615,7 @@ namespace MyCAD1
                         Cover.AddVertexAt(0, ap1.Convert2D(x0, y0 + 500), 0, 0, 0);
                         Cover.Layer = "细线";
                         Cover.Closed = true;
+                        Cover.TransformBy(Matrix3d.Rotation(ang_red, Vector3d.ZAxis, ap1.Convert3D()));
                         modelSpace.AppendEntity(Cover);
                         tr.AddNewlyCreatedDBObject(Cover, true);
                     }

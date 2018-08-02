@@ -101,17 +101,7 @@ namespace MyCAD1
                 TheDalot.H1 = relatedDMT.H1;
                 TheDalot.H2 = relatedDMT.H2;
                 TheDalot.H3 = relatedDMT.H3;
-                if (TheDalot.H0 == 0)
-                {
-                    if (relatedDMT.Hw != 0)
-                    {
-                        TheDalot.H0 = TheDalot.H2 - 2 * TheDalot.Sect[2] / 1000;
-                    }
-                    else
-                    {
-                        TheDalot.H0 = TheDalot.H2 - relatedDMT.Ht - TheDalot.Sect[2] / 1000;
-                    }
-                }
+                TheDalot.H0 = relatedDMT.H2 - TheDalot.dH;
 
                 Point3d SJXRefPoint = relatedDMT.sjx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
                 Point3d DmxRefP = relatedDMT.dmx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
@@ -286,11 +276,12 @@ namespace MyCAD1
             //public AType Amont, Avale;
             //public DType DalotType;
             Point2d BasePoint=new Point2d(0,no*-50000);            
-            int LayerNum= int.Parse((string)theDT.Rows[rowIndex]["layerNum"]);
+            double LayerThick= double.Parse((string)theDT.Rows[rowIndex]["LayerThick"]);
+            double LayerWidth = double.Parse((string)theDT.Rows[rowIndex]["LayerWidth"]);
             int sA= int.Parse((string)theDT.Rows[rowIndex]["ScaleA"]);
             int sB = int.Parse((string)theDT.Rows[rowIndex]["ScaleB"]);
 
-            Dalot res = new Dalot(PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerNum,H0,sA,sB, cistri);
+            Dalot res = new Dalot(PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerThick,LayerWidth,H0,sA,sB, cistri);
             return res;
         }
 
