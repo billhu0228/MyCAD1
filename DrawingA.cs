@@ -57,16 +57,16 @@ namespace MyCAD1
             Database db = doc.Database;
             Editor ed = doc.Editor;
             ObjectId paperSpace = db.CreatPaperSpace();
-            //Transaction tr = db.TransactionManager.StartTransaction();
+            
 
             // 初始化带帽图列表
             string dmtpath = BPublicFunctions.GetXPath("选择带帽图数据","断面图提取文件|*.dat");
-            Dmt_list = IniDMT(dmtpath);           
-
+            Dmt_list = IniDMT(dmtpath);
+            ed.WriteMessage("\n断面图数据读取成功");
 
 
             //读取数据
-            Dalot TheDalot = new Dalot();
+            Dalot TheDalot;
             System.Data.DataTable Parameters = new System.Data.DataTable();
             test:
             string aa = BPublicFunctions.GetXPath("选择设计表");
@@ -76,8 +76,7 @@ namespace MyCAD1
             }
             else
             {
-                Parameters = GetDataFromExcelByCom(true, aa);
-                
+                Parameters = GetDataFromExcelByCom(true, aa);                
                 ed.WriteMessage("\n涵洞数据读取成功");
             }
 
@@ -88,8 +87,12 @@ namespace MyCAD1
 
             for (int ii = 0; ii < Parameters.Rows.Count; ii++)
             {
+                
                 // 实例化涵洞
                 TheDalot = GetDalotFromDataTable(Parameters, ii);
+
+
+
                 // 查询带帽图
                 DMT relatedDMT = DmtLookUp(Dmt_list, TheDalot.Pk_string());
                 Point3d PointDMT = new Point3d(relatedDMT.x0, 0, 0);
@@ -133,17 +136,18 @@ namespace MyCAD1
                 TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), relatedDMT.sjx, relatedDMT.dmx,
                     SJXRefPoint, DmxRefP);
                 TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(30000, dAB));
+                Point2d centerPointC = TheDalot.BasePoint.Convert2D(30000, dAB+TheDalot.Sect[2]);
+
 
 
                 // 成图
-
                 db.XrefAttachAndInsert(@"G:\涵洞自动成图程序\TK.dwg", paperSpace, Point3d.Origin.Convert3D(0, 24 - (1 + ii) * 297, 0));
 
+                // 注释
                 using (Transaction tr = db.TransactionManager.StartTransaction())
                 {
                     Layout lay = (Layout)tr.GetObject(paperSpace, OpenMode.ForWrite);
-                    //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 100); vp.Locked = true; });
-                    //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 75); vp.Locked = true; });
+
                     var vpIds = lay.GetViewports();
                     Viewport vpA, vpB;
                     var btr = (BlockTableRecord)tr.GetObject(lay.BlockTableRecordId, OpenMode.ForWrite);
@@ -152,17 +156,18 @@ namespace MyCAD1
                     tr.AddNewlyCreatedDBObject(vpA, true);
                     vpA.On = true;
                     vpA.GridOn = false;
-                    vpA.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -(1 + ii) * 297, 0), centerPoint, 100);
+                    vpA.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -(1 + ii) * 297, 0), centerPoint, TheDalot.ScaleA);
                     vpB = new Viewport();
                     btr.AppendEntity(vpB);
                     tr.AddNewlyCreatedDBObject(vpB, true);
                     vpB.On = true;
                     vpB.GridOn = false;
-                    vpB.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -(1 + ii) * 297, 0), Point2d.Origin, 100);
+                    vpB.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -(1 + ii) * 297, 0), centerPointC, TheDalot.ScaleB);
 
-
+                    TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
                     MText theNote = new MText();
-                    theNote.Contents = "Note:" +
+                    theNote.Contents =
+                        "Note:\\P" +
                         "1.L'unité de dimension est en centimètre sauf que les cotes. \\P" +
                         "2.Le corps du dalot est préfabriqué en segment et la tête d'ouvrage est coulés sur place. Le joint est  mis en place entre différents parties. \\P" +
                         "3.Explication pour joint et couche d'étanchéité : \\P" +
@@ -172,45 +177,46 @@ namespace MyCAD1
                         "il faut d'abord mettre 2cm de  mortier hydrofuge sur tablier et puis enduire bitume avec épaisseur de 1~1.5mm deux fois pour les  partie enterrés du dalot. \\P" +
                         "4.Vérifier la conformabilité entre les plans et terrain réel avant l'exécution du travaux. Il faut informer le bureau d'étude à réviser la cote s'il existe différence évidente.\\P" +
                         "5.Annuler l'enrochement d'exutoire du dalot si sa fondation est en roche. Après l'achèvement du dalot, il faut remplir ou creuser l'amont et l'aval du dalot pour assurer l'évacuation d'eau.\\P";
-                    theNote.Location = Point3d.Origin.Convert3D(40, 40 - (1 + ii) * 297, 0);
-
+                    theNote.Location = Point3d.Origin.Convert3D(260, 100 - (1 + ii) * 297, 0);
+                    theNote.TextStyleId = st["En"];
+                    theNote.Width = 145;
                     btr.AppendEntity(theNote);
                     tr.AddNewlyCreatedDBObject(theNote, true);
 
+
+                    
                     tr.Commit();
                 }
 
 
+                //  表格
 
-
-
-                //break;
-
-
-
-
+                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot);
 
             }
-
-
-
-
-
-
-
-
-
-
-
-
-            //ObjectId paperSpace=TheDalot.CreatPaperSpace(db, ed, new int[] { 100, 100, 75 });
-
 
         }
 
 
 
-        public  Dalot GetDalotFromDataTable(System.Data.DataTable theDT,int rowIndex)
+
+
+
+
+
+
+
+
+        //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 100); vp.Locked = true; });
+        //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 75); vp.Locked = true; });
+
+
+
+
+
+
+
+        public Dalot GetDalotFromDataTable(System.Data.DataTable theDT,int rowIndex)
         {
             string Pk=(string)theDT.Rows[rowIndex]["pk"];
             
@@ -263,14 +269,28 @@ namespace MyCAD1
             {
                 theType = DType.A;
             }
+
+            AType cAtype=AType.BZQ;
+            string amonttype= (string)theDT.Rows[rowIndex]["Amont"];
+            if (amonttype == "八字墙")
+            {
+                cAtype = AType.BZQ;
+            }
+            else if(amonttype=="集水井")
+            {
+                cAtype = AType.JSJ;
+            }
+
+            bool cistri = int.Parse((string)theDT.Rows[rowIndex]["isTri"]) == 0 ? false:true;
+
             //public AType Amont, Avale;
             //public DType DalotType;
             Point2d BasePoint=new Point2d(0,no*-50000);            
             int LayerNum= int.Parse((string)theDT.Rows[rowIndex]["layerNum"]);
-
             int sA= int.Parse((string)theDT.Rows[rowIndex]["ScaleA"]);
             int sB = int.Parse((string)theDT.Rows[rowIndex]["ScaleB"]);
-            Dalot res = new Dalot(PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, AType.JSJ, AType.BZQ, BasePoint, LayerNum,H0,sA,sB);
+
+            Dalot res = new Dalot(PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerNum,H0,sA,sB, cistri);
             return res;
         }
 

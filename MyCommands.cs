@@ -142,7 +142,8 @@ namespace MyCAD1
                     TextStyleTableRecord str = new TextStyleTableRecord()
                     {
                         Name = "En",
-                        FileName = "ARIALNBI",
+                        FileName = "times.ttf",
+                        XScale = 0.85,
                     };
                     st.Add(str);
                     tr.AddNewlyCreatedDBObject(str, true);
@@ -150,7 +151,8 @@ namespace MyCAD1
                 else
                 {
                     TextStyleTableRecord str = tr.GetObject(st["En"], OpenMode.ForWrite) as TextStyleTableRecord;
-                    str.FileName = "ARIALNBI";
+                    str.FileName = "Times New Roman";
+                    str.XScale = 0.85;
                 }
                 if (!st.Has("fsdb"))
                 {
@@ -436,11 +438,47 @@ namespace MyCAD1
         }
 
 
+        //-------------------------------------------------------------------------------------------
+        // Something From Keanw : http://www.keanw.com/
+        //-------------------------------------------------------------------------------------------
+        [CommandMethod("textext", CommandFlags.UsePickSet)]
+        public static void TextExe()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;            
+
+            if (doc == null)
+                return;
+            var ed = doc.Editor;
+            PromptSelectionOptions Opts = new PromptSelectionOptions();
+            Opts.MessageForAdding = "\n请选择断面图";
+            var psr = ed.GetSelection(Opts);
+            if (psr.Status != PromptStatus.OK)
+                return;
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (dynamic id in psr.Value.GetObjectIds())
+                {
+                    if (id.ObjectClass.Name == "AcDbText")
+                    {
+                        DBText item = tr.GetObject(id, OpenMode.ForRead) as DBText;
+                        ed.WriteMessage("\n{0}", item.TextString);
+                    }
+                    else if (id.ObjectClass.Name == "AcDbMtext")
+                    {
+                        MText item = tr.GetObject(id, OpenMode.ForRead) as MText;
+                        ed.WriteMessage("\n{0}", item.Contents);
+                    }
+                }
+            }
+        }
+
 
 
         //-------------------------------------------------------------------------------------------
-        
-        
+
+
         [CommandMethod("bReplace", CommandFlags.UsePickSet)]
         public static void TextReplace()
         {

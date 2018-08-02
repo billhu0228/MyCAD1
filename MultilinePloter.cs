@@ -50,7 +50,7 @@ namespace MyCAD1
                     endPts = new Point3dCollection();
                     tmp = new Line(BotStartPoint, BotEndPoint) {Layer=Layers[ii] ,LinetypeScale=4.0};
                     tmp = (Line)tmp.GetOffsetCurves(Seps[ii])[0];
-                    if (isVertical & ii!=0)
+                    if (isVertical & Seps[ii]!=0)
                     {
                         tmp.IntersectWith(leftside, Intersect.ExtendBoth, startPts, IntPtr.Zero, IntPtr.Zero);
                         tmp.IntersectWith(rightside, Intersect.ExtendBoth, endPts, IntPtr.Zero, IntPtr.Zero);

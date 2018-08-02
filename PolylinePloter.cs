@@ -187,6 +187,25 @@ namespace MyCAD1
                         p11 = p10.Convert2D(direct * 200, 0);
                         p12 = p11.Convert2D(0, -height + 250);
                         break;
+
+                    case 2800:
+                        p0 = AnchorPoint.Convert2D(0, 150 / Math.Cos(rotAngle));
+                        p1 = p0.Convert2D(direct * 3350, direct * 3350 * Math.Sin(rotAngle));
+                        p4 = p0.Convert2D(direct * 3600, direct * 3600 * Math.Sin(rotAngle));
+                        p5 = p4.Convert2D(0, 250);
+                        p3 = p5.Convert2D(0, -1100);
+                        p2 = p3.Convert2D(-direct * 250);
+                        p6 = p5.Convert2D(0, 300);
+                        p12 = p0.Convert2D(0, 250 / Math.Cos(rotAngle));
+                        p11 = p0.Convert2D(0, -150 + height / Math.Cos(rotAngle));
+                        p10 = p11.Convert2D(-direct * 300, -direct * 300 * Math.Tan(rotAngle));
+                        p7 = p11.Convert2D(0, 300);                        
+                        p8 = p7.Convert2D(0, 0);
+                        p9 = p8.Convert2D(-direct * 300, 0);
+                        p10 = p9.Convert2D(0, -300);
+                        
+                        
+                        break;
                 }
 
                 PL1.AddVertexAt(0, p0, 0, 0, 0);
@@ -203,8 +222,10 @@ namespace MyCAD1
                 PL1.AddVertexAt(11, p11, 0, 0, 0);
                 PL1.AddVertexAt(12, p12, 0, 0, 0);
 
-
-                PL1.TransformBy(Matrix3d.Rotation(rotAngle, Vector3d.ZAxis, AnchorPoint.Convert3D()));
+                if (height < 2800)
+                {
+                    PL1.TransformBy(Matrix3d.Rotation(rotAngle, Vector3d.ZAxis, AnchorPoint.Convert3D()));
+                }
                 PL1.Layer = "粗线";
 
                 Line L1, L2;
@@ -579,19 +600,7 @@ namespace MyCAD1
                         tr.AddNewlyCreatedDBObject(Cover, true);
                     }
                 }
-
-
-
-
-
-
-
-
-
-
-
-
-
+                
 
                 tr.Commit();
             }

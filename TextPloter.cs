@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace MyCAD1
 {
@@ -38,7 +39,234 @@ namespace MyCAD1
             return;
         }
 
+        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj)
+        {
+            double x0 = 276;
+            double x1 = 378 + 4;
+            double y0 = 276;
 
+            double t1 = 300;
+            double t2 = 338;
+            double t3 = 355;
+            double t4 = t3 + 12 + 4;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord recorder = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
+                DBText theTitle = new DBText();
+
+                theTitle.TextString = "TABLEAU QUANTITATIF DES DALOT "+curDatlotObj.Pk_string();
+                theTitle.Height = 3.5;
+                theTitle.Position = PaperOrigenPoint.Convert3D((x0+x1)*0.5,276);
+                theTitle.HorizontalMode =TextHorizontalMode.TextCenter;
+                theTitle.VerticalMode = TextVerticalMode.TextBottom;                
+                theTitle.AlignmentPoint = theTitle.Position;
+                theTitle.Layer = "标注";
+                theTitle.TextStyleId = st["En"];
+                theTitle.WidthFactor = 0.85;
+                recorder.AppendEntity(theTitle);
+                tr.AddNewlyCreatedDBObject(theTitle, true);
+
+                Dictionary<int,string[]> table = new Dictionary<int, string[]>();
+                table.Add(1, new string[] { "Béton", "C25/30", "m3", "24.3" });
+                table.Add(2, new string[] { "Armature", "FeE400", "kg", "2409" });
+                table.Add(3, new string[] { "Quantité de segment", "-", "bloc", "6" });
+                table.Add(4, new string[] { "Puit d'eau", "C25/30", "m3", "-" });
+                table.Add(5, new string[] { "Mur en aile", "C25/30", "m3", "11.2" });
+                table.Add(6, new string[] { "Guide roue", "C25/30", "m3", "-" });
+                table.Add(7, new string[] { "Armature", "FeE400", "kg", "860.2" });
+                table.Add(8, new string[] { "Béton", "C12/15", "m3", "6.6" });
+                table.Add(9, new string[] { "Graveleux latérique", "-", "m3", "27.8" });
+                table.Add(10, new string[] { "Badigeonnage des parements", "-", "m3", "93.8" });
+                table.Add(11, new string[] { "Motier hydro", "-", "m3", "-" });
+                table.Add(12, new string[] { "Joint", "-", "m3", "16.3" });
+                table.Add(13, new string[] { "Déblai", "-", "m3", "267.9" });
+                table.Add(14, new string[] { "Remblaiement au dos de dalot", "-", "m3", "96.5" });
+                table.Add(15, new string[] { "Enrochement", "-", "m3", "3.45" });
+
+
+                Dictionary<int, string> columnName = new Dictionary<int, string>();
+                columnName.Add(2, "Crops");
+                columnName.Add(5, "Entrée et sortie");
+                columnName.Add(8, "Foundation");
+                columnName.Add(11, "Etanchéité");
+                columnName.Add(14, "Terrassement");
+
+
+
+                for (int i = 0; i < 16; i++)
+                {
+                    y0 = 276 - i * 6;
+
+                    if (new List<int> { 1, 4, 8, 10, 13 }.Contains(i))
+                    {
+                        Line hengxian = new Line(PaperOrigenPoint.Convert3D(x0, y0, 0), PaperOrigenPoint.Convert3D(x1, y0, 0));
+                        hengxian.Layer = "标注";
+                        recorder.AppendEntity(hengxian);
+                        tr.AddNewlyCreatedDBObject(hengxian, true);
+                    }
+                    else
+                    {
+                        Line hengxian = new Line(PaperOrigenPoint.Convert3D(t1, y0, 0), PaperOrigenPoint.Convert3D(x1, y0, 0));
+                        hengxian.Layer = "标注";
+                        recorder.AppendEntity(hengxian);
+                        tr.AddNewlyCreatedDBObject(hengxian, true);
+                    }
+
+                    // 列名
+                    if (new List<int> {2,5, 8, 11, 14 }.Contains(i))
+                    {
+                        DBText txt = new DBText();
+                        txt.TextString = columnName[i];
+                        txt.TextStyleId = st["En"];
+                        txt.Height = 2.5;
+                        if (i == 5 || i == 8)
+                        {
+                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0);
+                        }
+                        else
+                        {
+                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0 - 3);
+                        }
+                        txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                        txt.VerticalMode = TextVerticalMode.TextVerticalMid;
+                        txt.AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0 - 3);
+                        txt.Layer = "标注";
+                        txt.WidthFactor = 0.85;
+                        recorder.AppendEntity(txt);
+                        tr.AddNewlyCreatedDBObject(txt, true);
+                    }
+
+
+                    // 内容
+                    if (i != 0)
+                    {
+                        for (int j = 0; j < 4; j++)
+                        {
+                            double tx = 0;
+                            if (j == 0)
+                            {
+                                tx = (t1 + t2) * 0.5;
+                            }
+                            else if (j == 1)
+                            {
+                                tx = (t3 + t2) * 0.5;
+                            }
+                            else if (j == 2)
+                            {
+                                tx = (t3 + t4) * 0.5;
+                            }
+                            else
+                            {
+                                tx = (x1 + t4) * 0.5;
+                            }
+                            DBText txt = new DBText()
+                            {
+                                TextString = table[i][j],
+                                TextStyleId = st["En"],
+                                Height = 2.5,
+                                Position = PaperOrigenPoint.Convert3D(tx, y0 - 3),
+                                HorizontalMode = TextHorizontalMode.TextCenter,
+                                VerticalMode = TextVerticalMode.TextVerticalMid,
+                                AlignmentPoint = PaperOrigenPoint.Convert3D(tx, y0 - 3),
+                                Layer = "标注",
+                                WidthFactor = 0.85,
+                            };
+                            recorder.AppendEntity(txt);
+                            tr.AddNewlyCreatedDBObject(txt, true);
+                        }
+                    }
+                }
+
+                foreach (double x_shuxian in new List<double> { t1, t2, t3, t4 })
+                {
+                    Line ShuXin = new Line();
+                    if (x_shuxian == t1)
+                    {
+                        ShuXin = new Line(PaperOrigenPoint.Convert3D(x_shuxian, 270), PaperOrigenPoint.Convert3D(x_shuxian, 180));
+                    }
+                    else
+                    {
+                        ShuXin = new Line(PaperOrigenPoint.Convert3D(x_shuxian, 276), PaperOrigenPoint.Convert3D(x_shuxian, 180));
+                    }
+                    ShuXin.Layer = "标注";
+                    recorder.AppendEntity(ShuXin);
+                    tr.AddNewlyCreatedDBObject(ShuXin, true);
+                }
+
+
+
+                DBText rowName = new DBText()
+                {
+                    TextString = "Aspect d'ouvrage",
+                    TextStyleId = st["En"],
+                    Height = 2.5,
+                    Position = PaperOrigenPoint.Convert3D((x0 + t2) * 0.5, 276 - 3),
+                    HorizontalMode = TextHorizontalMode.TextCenter,
+                    VerticalMode = TextVerticalMode.TextVerticalMid,
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t2) * 0.5, 276 - 3),
+                    Layer = "标注",
+                    WidthFactor = 0.85,
+                };
+                recorder.AppendEntity(rowName);
+                tr.AddNewlyCreatedDBObject(rowName, true);
+                rowName = new DBText()
+                {
+                    TextString = "Matériaux",
+                    TextStyleId = st["En"],
+                    Height = 2.5,
+                    Position = PaperOrigenPoint.Convert3D((t2 + t3) * 0.5, 276 - 3),
+                    HorizontalMode = TextHorizontalMode.TextCenter,
+                    VerticalMode = TextVerticalMode.TextVerticalMid,
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((t3 + t2) * 0.5, 276 - 3),
+                    Layer = "标注",
+                    WidthFactor = 0.85,
+                };
+                recorder.AppendEntity(rowName);
+                tr.AddNewlyCreatedDBObject(rowName, true);
+                rowName = new DBText()
+                {
+                    TextString = "Unité",
+                    TextStyleId = st["En"],
+                    Height = 2.5,
+                    Position = PaperOrigenPoint.Convert3D((t4 + t3) * 0.5, 276 - 3),
+                    HorizontalMode = TextHorizontalMode.TextCenter,
+                    VerticalMode = TextVerticalMode.TextVerticalMid,
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((t3 + t4) * 0.5, 276 - 3),
+                    Layer = "标注",
+                    WidthFactor = 0.85,
+                };
+                recorder.AppendEntity(rowName);
+                tr.AddNewlyCreatedDBObject(rowName, true);
+                rowName = new DBText()
+                {
+                    TextString = "Quantité",
+                    TextStyleId = st["En"],
+                    Height = 2.5,
+                    Position = PaperOrigenPoint.Convert3D((x1 + t4) * 0.5, 276 - 3),
+                    HorizontalMode = TextHorizontalMode.TextCenter,
+                    VerticalMode = TextVerticalMode.TextVerticalMid,
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((x1 + t4) * 0.5, 276 - 3),
+                    Layer = "标注",
+                    WidthFactor = 0.85,
+                };
+                recorder.AppendEntity(rowName);
+                tr.AddNewlyCreatedDBObject(rowName, true);
+
+                Polyline box = new Polyline();
+                box.AddVertexAt(0, PaperOrigenPoint.Convert2D(x0, y0 + 15 * 6), 0, 0.3, 0.3);
+                box.AddVertexAt(1, PaperOrigenPoint.Convert2D(x1, y0 + 15 * 6), 0, 0.3, 0.3);
+                box.AddVertexAt(2, PaperOrigenPoint.Convert2D(x1, y0-6), 0, 0.3, 0.3);
+                box.AddVertexAt(3, PaperOrigenPoint.Convert2D(x0, y0 -6), 0, 0.3, 0.3);
+                box.Layer = "标注";
+                box.Closed = true;
+                recorder.AppendEntity(box);
+                tr.AddNewlyCreatedDBObject(box, true);
+                tr.Commit();
+            }
+            return;
+        }
 
 
 
