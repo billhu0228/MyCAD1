@@ -260,4 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 
-! *.dll
+# Build results
+BackUP/
