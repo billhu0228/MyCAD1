@@ -260,4 +260,4 @@ paket-files/
 __pycache__/
 *.pyc
 
-! \\bin\\Release\\MyCAD2014.dll
+! /bin/Release/MyCAD2014.dll
