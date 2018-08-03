@@ -735,8 +735,17 @@ namespace MyCAD1
                 //四孔
 
             }
-            TextPloter.PrintLineText(db, AnchorPoint.Convert2D(-1000, -50),AnchorPoint.Convert2D(-1000, -1000), new string[]
-                { "C12/15 B.P e=10cm", string.Format("Graveleux lateritique e={0}cm",(LayerW/10).ToString()) }, false, s);           
+            if (LayerT == 0)
+            {
+                TextPloter.PrintLineText(db, AnchorPoint.Convert2D(-1000, -50), AnchorPoint.Convert2D(-1000, -1000), new string[]
+                { "C12/15 B.P e=10cm" }, false, s);
+            }
+            else
+            {
+                TextPloter.PrintLineText(db, AnchorPoint.Convert2D(-1000, -50), AnchorPoint.Convert2D(-1000, -1000), new string[]
+                { "C12/15 B.P e=10cm", string.Format("Graveleux lateritique e={0}cm",(LayerT/10).ToString()) }, false, s);
+            }
+      
             TextPloter.PrintText(db, "REMBLAI.G.L", 3 , AnchorPoint.Convert2D(-0.5 * Sect[0] - 1000, 1000), s);            
             TextPloter.PrintTitle(db, "COUPE B-B", AnchorPoint.Convert2D(0, Sect[2]+25*s), s);
 
