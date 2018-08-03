@@ -65,20 +65,14 @@
     <Compile Include="BPublicFunctions.cs" />
     <Compile Include="CADini.cs" />
     <Compile Include="DimPloter.cs" />
-    <Compile Include="DataExtract.cs" />
     <Compile Include="TextPloter.cs" />
     <Compile Include="HatchPloter.cs" />
     <Compile Include="MultilinePloter.cs" />
     <Compile Include="PolylinePloter.cs" />
     <Compile Include="Dalot.cs" />
-    <Compile Include="Culvert.cs" />
     <Compile Include="MyCommands.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="DrawingA.cs" />
-    <Compile Include="XiangHanV2-3.cs" />
-    <Compile Include="XiangHanV2-2.cs" />
-    <Compile Include="XiangHanV2-1.cs" />
-    <Compile Include="XiangHan.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
