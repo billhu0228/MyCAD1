@@ -131,8 +131,10 @@ namespace MyCAD1
 
 
                 // 成图
-                db.XrefAttachAndInsert(@"G:\涵洞自动成图程序\TK.dwg", paperSpace, Point3d.Origin.Convert3D(0, 24 - (1 + ii) * 297, 0));
-
+                string fsd=Path.Combine(Path.GetDirectoryName(dmtpath), "TK.dwg");
+                
+                db.XrefAttachAndInsert(fsd, paperSpace, Point3d.Origin.Convert3D(0, 24 - (1 + ii) * 297, 0));
+                
                 // 注释
                 using (Transaction tr = db.TransactionManager.StartTransaction())
                 {
