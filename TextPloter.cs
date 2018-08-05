@@ -39,7 +39,7 @@ namespace MyCAD1
             return;
         }
 
-        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj)
+        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj,DMT curDMT)
         {
             double x0 = 276;
             double x1 = 378 + 4;
@@ -295,6 +295,7 @@ namespace MyCAD1
                     double w = WdWidth * cnt.Length * scale;
                     if (w > LineWidth) { LineWidth = w; }
                 }
+
                 
                 double xdir = isLeft ? -1 : 1;
                 double ydir;
@@ -315,12 +316,16 @@ namespace MyCAD1
                 int i = 0;
                 foreach (string cnt in textList)
                 {
+
                     side = new Line(EndPoint.Convert3D(0, i *( wdh+0.5) * scale * ydir), EndPoint.Convert3D(xdir * LineWidth, i * (wdh+0.5) * scale * ydir));
                     side.Layer = "标注";
                     modelSpace.AppendEntity(side);
                     tr.AddNewlyCreatedDBObject(side, true);
 
-
+                    if (cnt.StartsWith("Joint"))
+                    {
+                        break;
+                    }
                     txt = new DBText();
                     txt.TextString = cnt;
                     txt.Height = wdh * scale;    
@@ -337,6 +342,46 @@ namespace MyCAD1
 
                     i++;
                 }
+
+
+                if (textList[0].StartsWith("Joint"))
+                {
+                    MatchCollection matches = Regex.Matches(textList[0], @"(\d+\.?\d*)");
+
+
+                    txt = new DBText();
+                    txt.TextString = "Joint";
+                    txt.Height = wdh * scale;
+                    txt.Position = side.StartPoint;
+                    txt.HorizontalMode = isLeft ? TextHorizontalMode.TextRight : TextHorizontalMode.TextLeft;
+                    txt.VerticalMode = TextVerticalMode.TextBottom;
+                    //txt.Justify = AttachmentPoint.BaseLeft;
+                    txt.AlignmentPoint = txt.Position;
+                    txt.Layer = "标注";
+                    txt.TextStyleId = st["fsdb"];
+                    txt.WidthFactor = 0.75;
+                    modelSpace.AppendEntity(txt);
+                    tr.AddNewlyCreatedDBObject(txt, true);
+
+
+                    txt = new DBText();
+                    txt.TextString =string.Format ("e={0}cm", matches[0]);
+                    txt.Height = wdh * scale;
+                    txt.Position = side.StartPoint;
+                    txt.HorizontalMode = isLeft ? TextHorizontalMode.TextRight : TextHorizontalMode.TextLeft;
+                    txt.VerticalMode = TextVerticalMode.TextTop;
+                    //txt.Justify = AttachmentPoint.BaseLeft;
+                    txt.AlignmentPoint = txt.Position;
+                    txt.Layer = "标注";
+                    txt.TextStyleId = st["fsdb"];
+                    txt.WidthFactor = 0.75;
+                    modelSpace.AppendEntity(txt);
+                    tr.AddNewlyCreatedDBObject(txt, true);
+                    side.EndPoint = side.StartPoint.Convert3D(xdir*0.7 * side.Length);
+
+                }
+
+
                 tr.Commit();
             }
         }
@@ -569,7 +614,7 @@ namespace MyCAD1
                     {
                         TextString = theName.ToString(),
                         Layer = "标注",
-                        Height = 3 * scale,
+                        Height = 4 * scale,
                         TextStyleId = st["fsdb"],
                         HorizontalMode = TextHorizontalMode.TextCenter,
                         VerticalMode = TextVerticalMode.TextBottom,
@@ -592,10 +637,10 @@ namespace MyCAD1
                     Polyline PL=new Polyline();
                     Point2d p0=new Point2d(), p1=new Point2d();
 
-                    L = i == 0 ? new Line(StartPoint.Convert3D(-1 * scale, 0), StartPoint.Convert3D(1 * scale, 0)) :
-                        new Line(EndPoint.Convert3D(-1 * scale, 0), EndPoint.Convert3D(1 * scale, 0));
+                    L = i == 0 ? new Line(StartPoint.Convert3D(-1.5 * scale, 0), StartPoint.Convert3D(1.5 * scale, 0)) :
+                        new Line(EndPoint.Convert3D(-1.5 * scale, 0), EndPoint.Convert3D(1.5 * scale, 0));
                     p0 = i == 0 ? StartPoint : EndPoint;
-                    p1 = i == 0 ? StartPoint.Convert2D(0, -1 * scale) : EndPoint.Convert2D(0, -1 * scale);
+                    p1 = i == 0 ? StartPoint.Convert2D(0, -2 * scale) : EndPoint.Convert2D(0, -2 * scale);
 
                     L.Layer = "标注";
                     L.ColorIndex = 1;                    
@@ -603,7 +648,7 @@ namespace MyCAD1
                     modelSpace.AppendEntity(L);
                     tr.AddNewlyCreatedDBObject(L, true);
 
-                    PL.AddVertexAt(0,p0, 0, 0, 1.5*scale);
+                    PL.AddVertexAt(0,p0, 0, 0, 2*scale);
                     PL.AddVertexAt(1, p1, 0, 0, 0);
                     PL.TransformBy(Matrix3d.Rotation(ang, Vector3d.ZAxis, p0.Convert3D()));
                     modelSpace.AppendEntity(PL);
@@ -626,7 +671,7 @@ namespace MyCAD1
                 BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                     OpenMode.ForWrite) as BlockTableRecord;
 
-                txt.TextString =isUp?"DABAOLA":"COYAH";
+                txt.TextString =isUp?"DABOLA":"COYAH";
                 txt.Layer = "标注";
                 txt.Height = 3 * scale;
                 txt.TextStyleId = st["fsdb"];

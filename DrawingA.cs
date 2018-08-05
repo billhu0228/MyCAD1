@@ -23,22 +23,19 @@ using System.Diagnostics;
 
 namespace MyCAD1
 {
+    public struct DMT
+    {
+        public double Wz, Wy;
+        public double H1, H2, H3;
+        public double Ht, Hw;
+        public double x0;
+        public string pk_string;
+        public Polyline dmx, sjx;
+    }
     public class Drawing
     {
 
 
-
-
-
-        public struct DMT
-        {
-            public double Wz, Wy;
-            public double H1, H2, H3;
-            public double Ht, Hw;
-            public double x0;
-            public string pk_string;
-            public Polyline dmx, sjx;
-        }
         public List<DMT> Dmt_list;
 
 
@@ -61,24 +58,49 @@ namespace MyCAD1
 
             // 初始化带帽图列表
             string dmtpath = BPublicFunctions.GetXPath("选择带帽图数据","断面图提取文件|*.dat");
-            Dmt_list = IniDMT(dmtpath);
-            ed.WriteMessage("\n断面图数据读取成功");
+            if (dmtpath == "")
+            {
+                return;
+            }
+            else
+            {
+                Dmt_list = IniDMT(dmtpath);
+                ed.WriteMessage("\n断面图数据读取成功");
+            }
+
 
 
             //读取数据
             Dalot TheDalot;
             System.Data.DataTable Parameters = new System.Data.DataTable();
-            test:
-            string aa = BPublicFunctions.GetXPath("选择设计表");
+
+            string aa = BPublicFunctions.GetXPath("选择设计表", "参数表|*.xls");
             if (aa == "")
             {
-                goto test;
+                return;
             }
             else
             {
                 Parameters = GetDataFromExcelByCom(true, aa);                
                 ed.WriteMessage("\n涵洞数据读取成功");
             }
+
+            //// 删除范围
+            //int[] IDtoPolot=new int[] { };
+            //PromptKeywordOptions KO = new PromptKeywordOptions("\n请输入涵洞号");           
+            //KO.Keywords.Add("All");
+            //KO.Keywords.Add("Single");
+            //KO.AllowNone = true;
+           
+            //PromptResult pResults = ed.GetKeywords(KO);
+            //if (pResults.Status == PromptStatus.OK)
+            //{
+            //    if (pResults.StringResult == "All")
+            //    {
+            //        //
+
+            //    }
+            //}
 
 
 
@@ -95,6 +117,11 @@ namespace MyCAD1
 
                 // 查询带帽图
                 DMT relatedDMT = DmtLookUp(Dmt_list, TheDalot.Pk_string());
+                if(relatedDMT.dmx is null)
+                {
+                    ed.WriteMessage("\n里程"+TheDalot.Pk_string()+"涵洞无断面信息，无法绘制");
+                    continue;
+                }
                 Point3d PointDMT = new Point3d(relatedDMT.x0, 0, 0);
                 TheDalot.W1 = relatedDMT.Wy * 1000;
                 TheDalot.W2 = relatedDMT.Wz * 1000;
@@ -105,6 +132,10 @@ namespace MyCAD1
 
                 Point3d SJXRefPoint = relatedDMT.sjx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
                 Point3d DmxRefP = relatedDMT.dmx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
+
+
+
+
 
 
 
@@ -119,14 +150,14 @@ namespace MyCAD1
                 double halfY = (extA.MaxPoint.Y - extA.MinPoint.Y) * 0.5;
                 Point2d centerPoint = Point2d.Origin.Convert2D(cx, extA.MaxPoint.Y - 277 * 0.5 * scaleA + 15 * scaleA);
                 double dAB = extA.MinPoint.Y - TheDalot.BasePoint.Y;
-                dAB -= 1500;//图名
-                dAB -= 1500;//顶标注
-                dAB -= 1500; //H2
+                dAB -= 15*scaleA;//图名
+                dAB -= 15* scaleA;//顶标注
+                dAB -= 15* scaleA; //H2
                 dAB -= (TheDalot.H2 - TheDalot.H0) * 1000;
                 TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), relatedDMT.sjx, relatedDMT.dmx,
                     SJXRefPoint, DmxRefP);
-                TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(30000, dAB));
-                Point2d centerPointC = TheDalot.BasePoint.Convert2D(30000, dAB+TheDalot.Sect[2]);
+                TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(300* scaleA, dAB));
+                Point2d centerPointC = TheDalot.BasePoint.Convert2D(300* scaleA, dAB+TheDalot.Sect[2]);
 
 
 
@@ -183,7 +214,7 @@ namespace MyCAD1
 
                 //  表格
 
-                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot);
+                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot,relatedDMT);
 
             }
 
@@ -208,10 +239,14 @@ namespace MyCAD1
 
 
 
-        public Dalot GetDalotFromDataTable(System.Data.DataTable theDT,int rowIndex)
+        public Dalot GetDalotFromDataTable(System.Data.DataTable theDT,int DatlotId)
         {
-            string Pk=(string)theDT.Rows[rowIndex]["pk"];
-            
+            int rowIndex = DatlotId;
+            //var results = from myRow in theDT.AsEnumerable()
+            //              where myRow.Field<string>("id") == DatlotId.ToString()
+            //              select myRow;
+
+            string Pk=(string)theDT.Rows[rowIndex]["pk"];            
             double Ang=90.0-double.Parse((string)theDT.Rows[rowIndex]["Ang"]);
             double Slop = double.Parse((string)theDT.Rows[rowIndex]["slop"]);
             double Length = double.Parse((string)theDT.Rows[rowIndex]["Length"])*1000.0;

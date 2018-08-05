@@ -202,9 +202,24 @@ namespace MyCAD1
                         p7 = p11.Convert2D(0, 300);                        
                         p8 = p7.Convert2D(0, 0);
                         p9 = p8.Convert2D(-direct * 300, 0);
+                        p10 = p9.Convert2D(0, -300);   
+                        break;
+
+                    case 3800:
+                        p0 = AnchorPoint.Convert2D(0, 150 / Math.Cos(rotAngle));
+                        p1 = p0.Convert2D(direct * 4850, direct * 4850 * Math.Sin(rotAngle));
+                        p4 = p0.Convert2D(direct * 5100, direct * 5100 * Math.Sin(rotAngle));
+                        p5 = p4.Convert2D(0, 250);
+                        p3 = p5.Convert2D(0, -1100);
+                        p2 = p3.Convert2D(-direct * 250);
+                        p6 = p5.Convert2D(0, 300);
+                        p12 = p0.Convert2D(0, 250 / Math.Cos(rotAngle));
+                        p11 = p0.Convert2D(0, -150 + height / Math.Cos(rotAngle));
+                        p10 = p11.Convert2D(-direct * 300, -direct * 300 * Math.Tan(rotAngle));
+                        p7 = p11.Convert2D(0, 300);
+                        p8 = p7.Convert2D(0, 0);
+                        p9 = p8.Convert2D(-direct * 300, 0);
                         p10 = p9.Convert2D(0, -300);
-                        
-                        
                         break;
                 }
 
@@ -253,7 +268,7 @@ namespace MyCAD1
 
 
 
-        public static Polyline[] PlotWallPlan(Database db, Line[] LSet, double width, bool isLeft)
+        public static Polyline[] PlotWallPlan(Database db, Line[] LSet, double width, bool isLeft,int scale)
         {
             Polyline PL1 = new Polyline() { Closed = true, Layer = "粗线" };    // 外框
             Polyline PL2 = new Polyline() { Closed = false, Layer = "粗线" };   // 上拐角
@@ -294,7 +309,7 @@ namespace MyCAD1
                 int direct = isLeft ? -1 : 1;
                 double dy = (UpperPt.Y - LowerPt.Y)/Math.Cos(ang_red);
                 double dy2 = 0;
-                double thick,Wall_width,Wall_thick,Mouth_thick;
+                double thick,Wall_width,Wall_thick,Mouth_thick,Plate_thick;
 
                 
                 switch (width)
@@ -304,24 +319,28 @@ namespace MyCAD1
                         Wall_width = 1800;
                         Wall_thick = 350;
                         Mouth_thick = 250;
+                        Plate_thick = 250;
                         break;
                     case 1900:
                         thick = 200;
                         Wall_width = 1800+200;
                         Wall_thick = 200;
                         Mouth_thick = 200;
+                        Plate_thick = 200;
                         break;
                     case 2500:
                         thick = 200;
                         Wall_width = 2575+250;
                         Wall_thick = 250;
                         Mouth_thick = 250;
+                        Plate_thick = 250;
                         break;
                     case 4700:
                         thick = 300;
                         Wall_thick = 350;
                         Wall_width = 3600;
                         Mouth_thick = 250;
+                        Plate_thick = 300;
                         break;
 
                 }
@@ -407,6 +426,33 @@ namespace MyCAD1
                 modelSpace.AppendEntity(L6);
                 tr.AddNewlyCreatedDBObject(L6, true);
 
+                DBText txt = new DBText();
+                Circle C1 = new Circle();
+                Circle C2 = new Circle();
+                Point2d PositionPoint = p0.Convert2D(direct * 10 * scale, 3 * scale);
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+
+                
+                txt.TextString = (Plate_thick/10).ToString();
+                txt.Height = 2 * scale;
+                txt.Position = PositionPoint.Convert3D();
+                txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                txt.VerticalMode = TextVerticalMode.TextVerticalMid;
+                txt.AlignmentPoint = PositionPoint.Convert3D();
+                txt.TextStyleId = st["fsdb"];
+                txt.Layer = "标注";
+                txt.WidthFactor = 0.75;
+
+                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.3 * scale);
+                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.6 * scale);
+                C1.Layer = "标注";
+                C2.Layer = "标注";
+                modelSpace.AppendEntity(txt);
+                tr.AddNewlyCreatedDBObject(txt, true);
+                modelSpace.AppendEntity(C1);
+                tr.AddNewlyCreatedDBObject(C1, true);
+                modelSpace.AppendEntity(C2);
+                tr.AddNewlyCreatedDBObject(C2, true);
 
                 tr.Commit();
             }
@@ -471,6 +517,56 @@ namespace MyCAD1
             }            
             return PL1;
         }
+
+        public static Polyline Plot11(Database db, Point2d AnchorPoint, Dalot curDalot, double hp = 0.01,double footWidht=400)
+        {
+            Polyline PL1 = new Polyline() { Closed = true };
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+
+                Line2d AxisY = new Line2d(AnchorPoint, AnchorPoint.Convert2D(0, 1));
+                Point2d p0, p1, p2, p3, p4,p5,p6,p7,p8,p9,p10;
+                p0 = AnchorPoint.Convert2D(-0.5 * curDalot.Sect[0] - footWidht, 0);
+                p1 = p0.Mirror(AxisY);
+                p2 = p1.Convert2D(0, curDalot.Sect[4]);
+                if (footWidht == 0)
+                {
+                    p3 = p2.Convert2D(-footWidht +0);
+                    p4 = p3.Convert2D(0, curDalot.Sect[7]);
+                }
+                else
+                {
+                    p3 = p2.Convert2D(-footWidht + curDalot.Sect[6]);
+                    p4 = p3.Convert2D(-curDalot.Sect[6], curDalot.Sect[7]);
+                }
+                p5 = p1.Convert2D(-footWidht, curDalot.Sect[2]);
+                p6 = AnchorPoint.Convert2D(0, curDalot.Sect[2] + 0.5 * curDalot.Sect[2] * hp);
+                p7 = p5.Mirror(AxisY);
+                p8 = p4.Mirror(AxisY);
+                p9 = p3.Mirror(AxisY);
+                p10 = p2.Mirror(AxisY);
+                PL1.AddVertexAt(0, p0, 0, 0, 0);
+                PL1.AddVertexAt(1, p1, 0, 0, 0);
+                PL1.AddVertexAt(2, p2, 0, 0, 0);
+                PL1.AddVertexAt(3, p3, 0, 0, 0);
+                PL1.AddVertexAt(4, p4, 0, 0, 0);
+                PL1.AddVertexAt(5, p5, 0, 0, 0);
+                PL1.AddVertexAt(6, p6, 0, 0, 0);
+                PL1.AddVertexAt(7, p7, 0, 0, 0);
+                PL1.AddVertexAt(8, p8, 0, 0, 0);
+                PL1.AddVertexAt(9, p9, 0, 0, 0);
+                PL1.AddVertexAt(10, p10, 0, 0, 0);
+                modelSpace.AppendEntity(PL1);
+                tr.AddNewlyCreatedDBObject(PL1, true);
+                tr.Commit();
+            }
+            return PL1;
+        }
+
+
 
 
 

@@ -63,7 +63,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BPublicFunctions.cs" />
-    <Compile Include="CADini.cs" />
     <Compile Include="DimPloter.cs" />
     <Compile Include="TextPloter.cs" />
     <Compile Include="HatchPloter.cs" />

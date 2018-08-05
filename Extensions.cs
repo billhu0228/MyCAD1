@@ -96,7 +96,19 @@ namespace MyCAD1
             return new Point3d(x+xx, y+yy, 0);
         }
 
-
+        public static Point2d GetXPoint2d(this Line aline,double part=0.5, double xx = 0, double yy = 0)
+        {
+            double x = aline.StartPoint.X + part * (aline.EndPoint.X - aline.StartPoint.X);
+            double y = aline.StartPoint.Y + part * (aline.EndPoint.Y - aline.StartPoint.Y);
+            return new Point2d(x + xx, y + yy);
+        }
+        /// <summary>
+        /// 获得中点
+        /// </summary>
+        /// <param name="aline"></param>
+        /// <param name="xx"></param>
+        /// <param name="yy"></param>
+        /// <returns></returns>
         public static Point2d GetMidPoint2d(this Line aline, double xx = 0, double yy = 0)
         {
             double x = 0.5 * (aline.StartPoint.X + aline.EndPoint.X);
@@ -105,15 +117,113 @@ namespace MyCAD1
         }
 
         /// <summary>
-        /// Apply plot settings to the provided layout.
+        /// 获得线段被矩形切割后线段
         /// </summary>
-        /// <param name="pageSize">The canonical media name for our page size.</param>
-        /// <param name="styleSheet">The pen settings file (ctb or stb).</param>
-        /// <param name="devices">The name of the output device.</param>
+        /// <param name="aline">原线段</param>
+        /// <param name="minPoint">左下角点</param>
+        /// <param name="maxPoint">右上角点</param>
+        /// <returns>新线段</returns>
+        public static Line CutByRect(this Line aline,Point2d minPoint,Point2d maxPoint,bool isInf=true)
+        {
+            Line res = aline;
+            Polyline BD = new Polyline();
+            Point3dCollection pts = new Point3dCollection();
+
+            double dx = maxPoint.X - minPoint.X;
+            double dy = maxPoint.Y - minPoint.Y;
+            BD.AddVertexAt(0, minPoint, 0, 0, 0);
+            BD.AddVertexAt(1, minPoint.Convert2D(dx), 0, 0, 0);
+            BD.AddVertexAt(2, maxPoint, 0, 0, 0);
+            BD.AddVertexAt(3, minPoint.Convert2D(0, dy), 0, 0, 0);
+            BD.Closed = true;
+
+            if (aline.StartPoint.X == aline.EndPoint.X)
+            {
+                if(aline.StartPoint.X==minPoint.X )
+                {
+                    res.StartPoint = minPoint.Convert3D();
+                    res.EndPoint = minPoint.Convert3D(0, dy);
+                    return res;
+                }
+                if (aline.StartPoint.X == maxPoint.X)
+                {
+                    res.StartPoint = minPoint.Convert3D(dx);
+                    res.EndPoint = maxPoint.Convert3D();
+                    return res;
+                }
+            }
+            if (isInf)
+            {
+                BD.IntersectWith(aline, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+                res.StartPoint = pts[0];
+                res.EndPoint = pts[1];
+            }
+            else
+            {
+                BD.IntersectWith(aline, Intersect.OnBothOperands, pts, IntPtr.Zero, IntPtr.Zero);
+                switch (pts.Count)
+                {
+                    case 0:
+                        break;
+
+                    case 1:
+                        if (aline.StartPoint.X > minPoint.X)
+                        {
+                            res.StartPoint = pts[0];
+                        }
+                        else
+                        {
+                            res.EndPoint = pts[0];
+                        }
+                        break;
+
+                    case 2:
+                        res.StartPoint = pts[0];
+                        res.EndPoint = pts[1];
+                        break;
+                }
+            }
+
+
+            return res;
+        }
+
+        public static Line CutByDoubleLine(this Line aline, Point2d minPoint, Point2d maxPoint, bool isInf = true)
+        {
+            Line res = (Line)aline.Clone() ;
+            Line A = new Line(minPoint.Convert3D(), minPoint.Convert3D(1));
+            Line B = new Line(maxPoint.Convert3D(), maxPoint.Convert3D(1));
+            Point3dCollection pts = new Point3dCollection();
+
+            pts.Clear();
+            aline.IntersectWith(A, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+            res.StartPoint = pts[0];
+
+            pts.Clear();
+            aline.IntersectWith(B, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
+            res.EndPoint = pts[0];
+            
+            return res;
+        }
 
 
 
-        public static void SetPlotSettings(this Layout lay, string pageSize, string styleSheet, string device)
+
+
+
+
+
+
+            /// <summary>
+            /// Apply plot settings to the provided layout.
+            /// </summary>
+            /// <param name="pageSize">The canonical media name for our page size.</param>
+            /// <param name="styleSheet">The pen settings file (ctb or stb).</param>
+            /// <param name="devices">The name of the output device.</param>
+
+
+
+            public static void SetPlotSettings(this Layout lay, string pageSize, string styleSheet, string device)
         {
             using (var ps = new PlotSettings(lay.ModelType))
             {

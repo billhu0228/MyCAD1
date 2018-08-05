@@ -246,6 +246,7 @@ namespace MyCAD1
                     Polyline Paa = new Polyline()
                     {
                         Color = Color.FromColorIndex(ColorMethod.ByAci, 9),
+                        Layer = "标注",
                     };
                     Paa.AddVertexAt(0, new Point2d(0, 0), 0, 0, 200);
                     Paa.AddVertexAt(1, new Point2d(0, 200), 0, 0, 0);
@@ -256,6 +257,7 @@ namespace MyCAD1
                     curbg.Height = 200;
                     curbg.WidthFactor = 0.75;
                     curbg.Tag = "标高";
+                    curbg.Layer = "标注";
                     curbg.TextStyleId = st["fsdb"];
                     btr.AppendEntity(curbg);
                     tr.AddNewlyCreatedDBObject(curbg, true);
@@ -623,7 +625,53 @@ namespace MyCAD1
 
 
 
+        [CommandMethod("SELKW")]
+        public void GetSelectionWithKeywords()
+        {
+            Document doc =
+                Application.DocumentManager.MdiActiveDocument;
+            Editor ed = doc.Editor;
 
+            // Create our options object
+
+            PromptSelectionOptions pso =
+                   new PromptSelectionOptions();
+
+            // Add our keywords
+
+            pso.Keywords.Add("F","第一(F)");
+            pso.Keywords.Add("Second");
+
+            // Set our prompts to include our keywords
+
+            string kws = pso.Keywords.GetDisplayString(true);
+            pso.MessageForAdding =
+              "\nAdd objects to selection or " + kws;
+            pso.MessageForRemoval =
+            "\nRemove objects from selection or " + kws;
+
+            // Implement a callback for when keywords are entered
+
+            pso.KeywordInput +=
+                   delegate (object sender, SelectionTextInputEventArgs e)
+                   {
+                       ed.WriteMessage("\nKeyword entered: {0}", e.Input);
+                   };
+
+            // Finally run the selection and show any results
+
+            PromptSelectionResult psr =
+                   ed.GetSelection(pso);
+
+            if (psr.Status == PromptStatus.OK)
+            {
+                ed.WriteMessage(
+                    "\n{0} object{1} selected.",
+                      psr.Value.Count,
+                      psr.Value.Count == 1 ? "" : "s"
+                    );
+            }
+        }
 
 
 

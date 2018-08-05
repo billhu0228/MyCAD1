@@ -181,6 +181,7 @@ namespace MyCAD1
                         ed = st.Convert3D(dirx * 4 * scale, 0, 0);
                     }
                     Line tmp = new Line(st, ed);
+                    tmp.Layer = "细线";
                     modelSpace.AppendEntity(tmp);
                     tr.AddNewlyCreatedDBObject(tmp, true);
                 }

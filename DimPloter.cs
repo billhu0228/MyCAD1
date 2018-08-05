@@ -114,6 +114,7 @@ namespace MyCAD1
             {
                 //acBlkRef.SetAttributes();
                 acBlkRef.ScaleFactors = new Scale3d(factor);
+                acBlkRef.Layer ="标注";
                 ms.AppendEntity(acBlkRef);
                 tr.AddNewlyCreatedDBObject(acBlkRef, true);
                 BlockTableRecord zheshiyuankuai;
@@ -183,7 +184,7 @@ namespace MyCAD1
                         {
                             acAttRef.SetAttributeFromBlock(acAtt, acBlkRef.BlockTransform);
                             acAttRef.Position = acAtt.Position.TransformBy(acBlkRef.BlockTransform);
-                            acAttRef.TextString = String.Format("{0:f2}%", hpdata);
+                            acAttRef.TextString = String.Format("{0:f2}%", Math.Abs(hpdata));
                             acBlkRef.AttributeCollection.AppendAttribute(acAttRef);
                             tr.AddNewlyCreatedDBObject(acAttRef, true);
                         }
