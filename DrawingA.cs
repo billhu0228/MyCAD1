@@ -308,7 +308,7 @@ namespace MyCAD1
                 cAtype = AType.JSJ;
             }
 
-            bool cistri = int.Parse((string)theDT.Rows[rowIndex]["isTri"]) == 0 ? false:true;
+            bool cistri = true;
 
             //public AType Amont, Avale;
             //public DType DalotType;

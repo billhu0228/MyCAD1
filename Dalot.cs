@@ -928,7 +928,7 @@ namespace MyCAD1
         }
 
 
-        private double[] GetSeps(double factor=1.0)
+        public double[] GetSeps(double factor=1.0)
         {
             double[] res;
             int numSeg;

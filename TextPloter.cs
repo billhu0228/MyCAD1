@@ -49,6 +49,9 @@ namespace MyCAD1
             double t2 = 338;
             double t3 = 355;
             double t4 = t3 + 12 + 4;
+
+            double[] fx = curDatlotObj.GetSeps(1);
+
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
