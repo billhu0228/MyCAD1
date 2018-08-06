@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Data;
 
 namespace MyCAD1
 {
@@ -39,18 +40,22 @@ namespace MyCAD1
             return;
         }
 
-        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj,DMT curDMT)
+        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj,DMT curDMT,System.Data.DataTable curParas,double [] AreaOfSection)
         {
             double x0 = 276;
             double x1 = 378 + 4;
             double y0 = 276;
-
             double t1 = 300;
             double t2 = 338;
             double t3 = 355;
             double t4 = t3 + 12 + 4;
 
-            double[] fx = curDatlotObj.GetSeps(1);
+            
+            int[] num23 = curDatlotObj.GetSegNum();
+            var results = from myRow in curParas.AsEnumerable()
+                          where Dalot.PkString2Double(myRow.Field<string>("pk")) ==  curDatlotObj.Pk
+                          select myRow;
+            var theData = results.First();
 
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
@@ -72,21 +77,95 @@ namespace MyCAD1
                 tr.AddNewlyCreatedDBObject(theTitle, true);
 
                 Dictionary<int,string[]> table = new Dictionary<int, string[]>();
-                table.Add(1, new string[] { "Béton", "C25/30", "m3", "24.3" });
-                table.Add(2, new string[] { "Armature", "FeE400", "kg", "2409" });
-                table.Add(3, new string[] { "Quantité de segment", "-", "bloc", "6" });
-                table.Add(4, new string[] { "Puit d'eau", "C25/30", "m3", "-" });
-                table.Add(5, new string[] { "Mur en aile", "C25/30", "m3", "11.2" });
+
+                double Conc = 0;
+                double Steel = 0;
+                int totalSegNum = 0;
+                double bzqL=0, jsjL=0;
+                double SectA = 0;
+                if (curDatlotObj.DalotType == DType.A)
+                {
+                    Conc=2*.0*num23[0]*1.18915+3.0*num23[1]*1.18915;
+                    Steel = num23[0] *(double)theData["2m钢筋量"] + num23[1] * (double)theData["3m钢筋量"];
+                    totalSegNum = num23[0] + num23[1];
+                    bzqL = 2.000;
+                    jsjL = 1.850;
+                    SectA = 1.18915;
+                }
+                else if (curDatlotObj.DalotType == DType.B)
+                {
+                    Conc = curDatlotObj.Length/1000 * 2.035;
+                    Steel = (double)theData["节段钢筋量"] * num23[0];
+                    totalSegNum = num23[0];
+                    bzqL = 2.825;
+                    jsjL = 1.900;
+                    SectA = 2.035;
+                }
+                else if(curDatlotObj.DalotType==DType.C)
+                {
+                    Conc = curDatlotObj.Length / 1000 * 5.5379;
+                    Steel = (double)theData["现浇钢筋总量"];
+                    totalSegNum = num23[0];
+                    bzqL = 3.6;
+                    jsjL = 0;
+                    SectA = 5.5379;
+                }
+                else if (curDatlotObj.DalotType == DType.D)
+                {
+                    Conc = curDatlotObj.Length / 1000 * 6.24965;
+                    Steel = (double)theData["现浇钢筋总量"];
+                    totalSegNum = num23[0];
+                    bzqL = 5.1;
+                    jsjL = 0;
+                    SectA = 6.24965;
+                }
+
+                string JSJConc,BZQConc;
+                double ASteel = 0;
+                double totalLength;
+                if (curDatlotObj.Amont == AType.BZQ)
+                {
+                    JSJConc = "-";
+                    BZQConc = string.Format("{0:F1}", (double)theData["八字墙混凝土"] * 2.0);
+                    ASteel = (double)theData["八字墙钢筋"] * 2;
+                    totalLength = curDatlotObj.Length / 1000 + 2 * bzqL;
+                }
+                else
+                {
+                    JSJConc = string.Format("{0:F1}", (double)theData["八字墙混凝土"] * 1.0);
+                    BZQConc = string.Format("{0:F1}", (double)theData["八字墙混凝土"] * 1.0);
+                    ASteel = (double)theData["八字墙钢筋"] + (double)theData["集水井钢筋"];
+                    totalLength = curDatlotObj.Length / 1000 +  bzqL+jsjL;
+                }
+                string C15 = string.Format("{0:F1}", AreaOfSection[1] * totalLength * 1.05);
+                string Gra=AreaOfSection[2]==0?"-" : string.Format("{0:F1}", AreaOfSection[2] * (totalLength-curDatlotObj.MouthT/1000*2) * 1.05);
+                string Mot = "-";
+                string Bad = string.Format("{0:F1}", (AreaOfSection[3]*2+ AreaOfSection[4]) * curDatlotObj.Length / 1000); ;
+                if (curDatlotObj.H2 - curDatlotObj.H0 - curDatlotObj.Sect[2] / 1000 <= 0.5)
+                {
+                    Mot = string.Format("{0:F1}", AreaOfSection[4] * curDatlotObj.Length / 1000);
+                }
+                string Joint = string.Format("{0:F1}", SectA * (totalSegNum+1));
+
+                string Rem = string.Format("{0:F1}", AreaOfSection[0] * totalLength);
+                string Enr=string.Format("{0:F1}",(bzqL / Math.Sqrt(3) * 2 + curDatlotObj.Sect[0]/1000)*0.625);
+                string Deb = string.Format("{0:F1}",( AreaOfSection[0]+AreaOfSection[5]+AreaOfSection[1]+AreaOfSection[2])* totalLength);
+
+                table.Add(1, new string[] { "Béton", "C25/30", "m3", string.Format("{0:F1}",Conc)});
+                table.Add(2, new string[] { "Armature", "FeE400", "kg", string.Format("{0:F1}",Steel)});
+                table.Add(3, new string[] { "Quantité de segment", "-", "bloc", string.Format("{0:G}", totalSegNum) });
+                table.Add(4, new string[] { "Puit d'eau", "C25/30", "m3", JSJConc });
+                table.Add(5, new string[] { "Mur en aile", "C25/30", "m3", BZQConc });
                 table.Add(6, new string[] { "Guide roue", "C25/30", "m3", "-" });
-                table.Add(7, new string[] { "Armature", "FeE400", "kg", "860.2" });
-                table.Add(8, new string[] { "Béton", "C12/15", "m3", "6.6" });
-                table.Add(9, new string[] { "Graveleux latérique", "-", "m3", "27.8" });
-                table.Add(10, new string[] { "Badigeonnage des parements", "-", "m3", "93.8" });
-                table.Add(11, new string[] { "Motier hydro", "-", "m3", "-" });
-                table.Add(12, new string[] { "Joint", "-", "m3", "16.3" });
-                table.Add(13, new string[] { "Déblai", "-", "m3", "267.9" });
-                table.Add(14, new string[] { "Remblaiement au dos de dalot", "-", "m3", "96.5" });
-                table.Add(15, new string[] { "Enrochement", "-", "m3", "3.45" });
+                table.Add(7, new string[] { "Armature", "FeE400", "kg", string.Format("{0:F1}", ASteel) });
+                table.Add(8, new string[] { "Béton", "C12/15", "m3", C15});
+                table.Add(9, new string[] { "Graveleux latérique", "-", "m3", Gra });
+                table.Add(10, new string[] { "Badigeonnage des parements", "-", "m3", Bad });
+                table.Add(11, new string[] { "Motier hydro", "-", "m3", Mot });
+                table.Add(12, new string[] { "Joint", "-", "m3", Joint });
+                table.Add(13, new string[] { "Déblai", "-", "m3", Deb });
+                table.Add(14, new string[] { "Remblaiement au dos de dalot", "-", "m3", Rem });
+                table.Add(15, new string[] { "Enrochement", "-", "m3", Enr });
 
 
                 Dictionary<int, string> columnName = new Dictionary<int, string>();
@@ -126,7 +205,7 @@ namespace MyCAD1
                         txt.Height = 2.5;
                         if (i == 5 || i == 8)
                         {
-                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0);
+                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0-3-3);
                         }
                         else
                         {

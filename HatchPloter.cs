@@ -48,7 +48,7 @@ namespace MyCAD1
         }
 
 
-        public static void PlotLayerOne(Database db,Point2d p1,Point2d p2,Hatch href,double tk=100,double scale=1,bool isVetica = false)
+        public static void PlotLayerOne(Database db,Point2d p1,Point2d p2,Hatch href,double offset=0,double tk=100,double scale=1,bool isVetica = false)
         {
             Hatch hat = new Hatch();
             Polyline PL = new Polyline();
@@ -60,16 +60,19 @@ namespace MyCAD1
                     OpenMode.ForWrite) as BlockTableRecord;
 
 
-                PL.AddVertexAt(0, p1, 0, 0, 0);
-                PL.AddVertexAt(1, p2, 0, 0, 0);
                 if (isVetica)
                 {
-                    PL.AddVertexAt(2, p2.Convert2D(0, -tk), 0, 0, 0);
-                    PL.AddVertexAt(3, p1.Convert2D(0, -tk), 0, 0, 0);
+                    PL.AddVertexAt(0, p1.Convert2D(0,-offset), 0, 0, 0);
+                    PL.AddVertexAt(1, p2.Convert2D(0,-offset), 0, 0, 0);
+                    PL.AddVertexAt(2, p2.Convert2D(0, -tk-offset), 0, 0, 0);
+                    PL.AddVertexAt(3, p1.Convert2D(0, -tk-offset), 0, 0, 0);
                 }
                 else
                 {
-                    Line linetmp = (Line)ori.GetOffsetCurves(-tk)[0];
+                    Line lineup = (Line)ori.GetOffsetCurves(-offset)[0];
+                    PL.AddVertexAt(0, lineup.StartPoint.Convert2D(), 0, 0, 0);
+                    PL.AddVertexAt(1, lineup.EndPoint.Convert2D(), 0, 0, 0);
+                    Line linetmp = (Line)ori.GetOffsetCurves(-tk-offset)[0];
                     PL.AddVertexAt(2, linetmp.EndPoint.Convert2D(), 0, 0, 0);
                     PL.AddVertexAt(3, linetmp.StartPoint.Convert2D(), 0, 0, 0);
                 }

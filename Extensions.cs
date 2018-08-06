@@ -430,13 +430,14 @@ namespace MyCAD1
             }
             else if (vpNum==2)
             {
-                vp.CenterPoint = BasePoint.Convert3D(340, 148.5, 0);
-                vp.Width = 140;
+                vp.CenterPoint = BasePoint.Convert3D(220+70, 148.5, 0);
+                vp.Width = 240;
                 vp.Height = 277;
             }
             vp.ViewCenter = CenterPoint;
             vp.CustomScale = 1.0 / scale;
             vp.Layer = "图框";
+            vp.Locked = true;
         }
 
 

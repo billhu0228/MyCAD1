@@ -85,13 +85,15 @@ namespace MyCAD1
                 ed.WriteMessage("\n涵洞数据读取成功");
             }
 
-            //// 删除范围
-            //int[] IDtoPolot=new int[] { };
+            // 生成绘图id序列           
+
+            var IDtoPolot = Parameters.AsEnumerable().Select(t =>t.Field<int>("id")).ToList();
+
             //PromptKeywordOptions KO = new PromptKeywordOptions("\n请输入涵洞号");           
             //KO.Keywords.Add("All");
             //KO.Keywords.Add("Single");
             //KO.AllowNone = true;
-           
+
             //PromptResult pResults = ed.GetKeywords(KO);
             //if (pResults.Status == PromptStatus.OK)
             //{
@@ -106,13 +108,11 @@ namespace MyCAD1
 
 
             // 实例化并绘图
-
-            for (int ii = 0; ii < Parameters.Rows.Count; ii++)
+            foreach(int ii in IDtoPolot)            
             {
                 
                 // 实例化涵洞
                 TheDalot = GetDalotFromDataTable(Parameters, ii);
-
 
 
                 // 查询带帽图
@@ -142,6 +142,7 @@ namespace MyCAD1
                 //绘图
                 int scaleA = TheDalot.ScaleA;
                 int scaleB = TheDalot.ScaleB;
+                double[] AreaForTabe = new double[4];
 
                 Extents2d extA;
                 extA = TheDalot.PlotA(db, TheDalot.BasePoint);
@@ -156,8 +157,13 @@ namespace MyCAD1
                 dAB -= (TheDalot.H2 - TheDalot.H0) * 1000;
                 TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), relatedDMT.sjx, relatedDMT.dmx,
                     SJXRefPoint, DmxRefP);
-                TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(300* scaleA, dAB));
-                Point2d centerPointC = TheDalot.BasePoint.Convert2D(300* scaleA, dAB+TheDalot.Sect[2]);
+                AreaForTabe=TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(300* scaleA, dAB));
+                double tmpwidth = (TheDalot.FooterW == 0) ? 500 : 2000;
+
+                double dBC = 0.5 * TheDalot.Sect[0]+ TheDalot.FooterW+tmpwidth+ TheDalot.Sect[2] + 1100+5*scaleB;
+                double offC = scaleB * 240 * 0.5 - dBC;
+
+                Point2d centerPointC = TheDalot.BasePoint.Convert2D(300* scaleA - offC, dAB+TheDalot.Sect[2]);
 
 
 
@@ -214,7 +220,7 @@ namespace MyCAD1
 
                 //  表格
 
-                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot,relatedDMT);
+                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot,relatedDMT, Parameters, AreaForTabe);
 
             }
 
@@ -227,44 +233,31 @@ namespace MyCAD1
 
 
 
-
-
-
-        //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(1, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 100); vp.Locked = true; });
-        //lay.ApplyToViewport(tr, 1 + ii, vp => { vp.DrawMyViewport(2, Point3d.Origin.Convert3D(0, -ii * 297, 0), Point2d.Origin, 75); vp.Locked = true; });
-
-
-
-
-
-
-
-        public Dalot GetDalotFromDataTable(System.Data.DataTable theDT,int DatlotId)
+        public Dalot GetDalotFromDataTable(System.Data.DataTable theDT, int DalotId)
         {
-            int rowIndex = DatlotId;
-            //var results = from myRow in theDT.AsEnumerable()
-            //              where myRow.Field<string>("id") == DatlotId.ToString()
-            //              select myRow;
-
-            string Pk=(string)theDT.Rows[rowIndex]["pk"];            
-            double Ang=90.0-double.Parse((string)theDT.Rows[rowIndex]["Ang"]);
-            double Slop = double.Parse((string)theDT.Rows[rowIndex]["slop"]);
-            double Length = double.Parse((string)theDT.Rows[rowIndex]["Length"])*1000.0;
-            double SegLength = double.Parse((string)theDT.Rows[rowIndex]["SegLength"])*1000.0;
-            double XMidDist = double.Parse((string)theDT.Rows[rowIndex]["XMidLength"])*1000.0;
-            int no= int.Parse((string)theDT.Rows[rowIndex]["id"]);
-            double H0 = double.Parse((string)theDT.Rows[rowIndex]["H0"]);
-            int c= int.Parse((string)theDT.Rows[rowIndex]["c"]);
-            double w= double.Parse((string)theDT.Rows[rowIndex]["w"]);
-            double h = double.Parse((string)theDT.Rows[rowIndex]["h"]);
-            DType theType=DType.A;
-            if (c==1)
+            var results = from myRow in theDT.AsEnumerable()
+                          where myRow.Field<int>("id") == DalotId
+                          select myRow;
+            var theData = results.First();
+            string Pk = (string)theData["pk"];
+            double Ang = 90.0 - (double)theData["Ang"];
+            double Slop = (double)theData["slop"];
+            double Length = (double)theData["Length"] * 1000.0;
+            double SegLength = (double)theData["SegLength"] * 1000.0;
+            double XMidDist = (double)theData["XMidLength"] * 1000.0;
+            int no = DalotId;
+            double H0 = (double)theData["H0"];
+            double c = (double)theData["c"];
+            double w = (double)theData["w"];
+            double h = (double)theData["h"];
+            DType theType = DType.A;
+            if (c == 1)
             {
                 if (w == 1.5)
                 {
                     theType = DType.A;
                 }
-                else if(w==2.0)
+                else if (w == 2.0)
                 {
                     theType = DType.B;
                 }
@@ -280,30 +273,30 @@ namespace MyCAD1
                     }
                 }
             }
-            else if(c==2)
+            else if (c == 2)
             {
                 //两孔
                 if (w == 2.0)
                 {
                     theType = DType.F;
                 }
-                else if(w==3.0)
+                else if (w == 3.0)
                 {
                     theType = DType.G;
-                }                
+                }
             }
             else
             {
                 theType = DType.A;
             }
 
-            AType cAtype=AType.BZQ;
-            string amonttype= (string)theDT.Rows[rowIndex]["Amont"];
+            AType cAtype = AType.BZQ;
+            string amonttype = (string)theData["Amont"];
             if (amonttype == "八字墙")
             {
                 cAtype = AType.BZQ;
             }
-            else if(amonttype=="集水井")
+            else if (amonttype == "集水井")
             {
                 cAtype = AType.JSJ;
             }
@@ -312,13 +305,13 @@ namespace MyCAD1
 
             //public AType Amont, Avale;
             //public DType DalotType;
-            Point2d BasePoint=new Point2d(0,no*-50000);            
-            double LayerThick= double.Parse((string)theDT.Rows[rowIndex]["LayerThick"]);
-            double LayerWidth = double.Parse((string)theDT.Rows[rowIndex]["LayerWidth"]);
-            int sA= int.Parse((string)theDT.Rows[rowIndex]["ScaleA"]);
-            int sB = int.Parse((string)theDT.Rows[rowIndex]["ScaleB"]);
+            Point2d BasePoint = new Point2d(0, no * -50000);
+            double LayerThick = (double)theData["LayerThick"];
+            double LayerWidth = (double)theData["LayerWidth"];
+            int sA = (int)(double)theData["ScaleA"];
+            int sB = (int)(double)theData["ScaleB"];
 
-            Dalot res = new Dalot(PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerThick,LayerWidth,H0,sA,sB, cistri);
+            Dalot res = new Dalot(Dalot.PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerThick, LayerWidth, H0, sA, sB, cistri);
             return res;
         }
 
@@ -354,7 +347,20 @@ namespace MyCAD1
                         if (!string.IsNullOrEmpty(txt)) name = txt;
                     }
                     while (dt.Columns.Contains(name)) name = name + "_1";//重复行名称会报错。
-                    dt.Columns.Add(new System.Data.DataColumn(name, typeof(string)));
+                    if (name == "pk" || name == "Amont")
+                    {
+                        dt.Columns.Add(new System.Data.DataColumn(name, typeof(string)));
+                    }
+                    else if (name == "id")
+                    {
+                        dt.Columns.Add(new System.Data.DataColumn(name, typeof(int)));
+                    }
+                    else
+                    {
+                        dt.Columns.Add(new System.Data.DataColumn(name, typeof(double)));
+                    }
+                    
+                    
                 }
                 //生成行数据
                 MOExcel.Range range;
@@ -509,11 +515,11 @@ namespace MyCAD1
         private DMT DmtLookUp(List<DMT> repo,string pk)
         {
             DMT res = new DMT();
-            double pk_double = PkString2Double(pk);
+            double pk_double = Dalot.PkString2Double(pk);
             foreach (DMT item in repo)
             {
-                double target = PkString2Double(item.pk_string);
-                if (PkString2Double(item.pk_string) == PkString2Double(pk))
+                double target = Dalot.PkString2Double(item.pk_string);
+                if (Dalot.PkString2Double(item.pk_string) == Dalot.PkString2Double(pk))
                 {
                     res = item;
                 }
@@ -522,26 +528,6 @@ namespace MyCAD1
         }
 
 
-        private double PkString2Double(string pks)
-        {
-            if (pks == null)
-            {
-                return 0;
-            }            
 
-            MatchCollection matches = Regex.Matches(pks, @"(\d+\.?\d*)");
-            if (matches.Count == 1)
-            {
-                return Convert.ToDouble(matches[0].Value);
-            }
-            else if (matches.Count == 2)
-            {
-                return Convert.ToDouble(matches[0].Value)*1000+ Convert.ToDouble(matches[1].Value); 
-            }
-            else
-            {
-                return 0;
-            }                
-        }
     }
 }
