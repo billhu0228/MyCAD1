@@ -379,7 +379,7 @@ namespace MyCAD1
 
                 return dt;
             }
-            catch { return null; }
+            catch { return dt; }
             finally
             {
                 workbook.Close(false, oMissiong, oMissiong);
