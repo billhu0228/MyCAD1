@@ -439,10 +439,7 @@ namespace MyCAD1
 
         }
 
-
-        //-------------------------------------------------------------------------------------------
-        // Something From Keanw : http://www.keanw.com/
-        //-------------------------------------------------------------------------------------------
+        
         [CommandMethod("textext", CommandFlags.UsePickSet)]
         public static void TextExe()
         {
@@ -564,36 +561,7 @@ namespace MyCAD1
             }
         }
 
-
-
-        [CommandMethod("XAO")]
-        public void XrefAttachAtOrigin()
-        {
-            var doc = Application.DocumentManager.MdiActiveDocument;
-            if (doc == null)
-                return;
-            var db = doc.Database;
-            var ed = doc.Editor;
-
-            // Ask the user to specify a file to attach
-
-            var opts = new PromptOpenFileOptions("Select Reference File");
-            opts.Filter = "Drawing (*.dwg)|*.dwg";
-            var pr = ed.GetFileNameForOpen(opts);
-
-            if (pr.Status == PromptStatus.OK)
-            {
-                // Attach the specified file and insert it at the origin
-
-                var res = db.XrefAttachAndInsert(pr.StringResult,db.CurrentSpaceId ,Point3d.Origin);
-
-                ed.WriteMessage(
-                         "External reference {0}attached at the origin.",
-                           res ? "" : "not "
-                         );
-            }
-        }
-
+        
 
 
 
@@ -622,60 +590,7 @@ namespace MyCAD1
             }
         }
 
-
-
-
-        [CommandMethod("SELKW")]
-        public void GetSelectionWithKeywords()
-        {
-            Document doc =
-                Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
-
-            // Create our options object
-
-            PromptSelectionOptions pso =
-                   new PromptSelectionOptions();
-
-            // Add our keywords
-
-            pso.Keywords.Add("F","第一(F)");
-            pso.Keywords.Add("Second");
-
-            // Set our prompts to include our keywords
-
-            string kws = pso.Keywords.GetDisplayString(true);
-            pso.MessageForAdding =
-              "\nAdd objects to selection or " + kws;
-            pso.MessageForRemoval =
-            "\nRemove objects from selection or " + kws;
-
-            // Implement a callback for when keywords are entered
-
-            pso.KeywordInput +=
-                   delegate (object sender, SelectionTextInputEventArgs e)
-                   {
-                       ed.WriteMessage("\nKeyword entered: {0}", e.Input);
-                   };
-
-            // Finally run the selection and show any results
-
-            PromptSelectionResult psr =
-                   ed.GetSelection(pso);
-
-            if (psr.Status == PromptStatus.OK)
-            {
-                ed.WriteMessage(
-                    "\n{0} object{1} selected.",
-                      psr.Value.Count,
-                      psr.Value.Count == 1 ? "" : "s"
-                    );
-            }
-        }
-
-
-
-
+        
 
 
 
