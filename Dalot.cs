@@ -476,7 +476,7 @@ namespace MyCAD1
             // 显示边框
             double dyy = maxPoint.Y - minPoint.Y;
             double dxx = maxPoint.X - minPoint.X;
-            PolylinePloter.Plot4(db, minPoint.Convert2D(0.5 * dxx), dyy, dxx);
+            //PolylinePloter.Plot4(db, minPoint.Convert2D(0.5 * dxx), dyy, dxx);
 
             
 

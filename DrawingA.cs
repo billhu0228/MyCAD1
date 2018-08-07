@@ -157,13 +157,13 @@ namespace MyCAD1
                 dAB -= (TheDalot.H2 - TheDalot.H0) * 1000;
                 TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), relatedDMT.sjx, relatedDMT.dmx,
                     SJXRefPoint, DmxRefP);
-                AreaForTabe=TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(300* scaleA, dAB));
+                AreaForTabe=TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(800* scaleA, dAB));
                 double tmpwidth = (TheDalot.FooterW == 0) ? 500 : 2000;
 
                 double dBC = 0.5 * TheDalot.Sect[0]+ TheDalot.FooterW+tmpwidth+ TheDalot.Sect[2] + 1100+5*scaleB;
                 double offC = scaleB * 240 * 0.5 - dBC;
 
-                Point2d centerPointC = TheDalot.BasePoint.Convert2D(300* scaleA - offC, dAB+TheDalot.Sect[2]);
+                Point2d centerPointC = TheDalot.BasePoint.Convert2D(800* scaleA - offC, dAB+TheDalot.Sect[2]);
 
 
 
