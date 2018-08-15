@@ -197,7 +197,7 @@ namespace MyCAD1
                         p2 = p3.Convert2D(-direct * 250);
                         p6 = p5.Convert2D(0, 300);
                         p12 = p0.Convert2D(0, 300 / Math.Cos(rotAngle));
-                        p11 = p0.Convert2D(0, -150 + height / Math.Cos(rotAngle));
+                        p11 = p0.Convert2D(0, -100 + height / Math.Cos(rotAngle));
                         p10 = p11.Convert2D(-direct * 300, -direct * 300 * Math.Tan(rotAngle));
                         p7 = p11.Convert2D(0, 300);                        
                         p8 = p7.Convert2D(0, 0);
@@ -214,7 +214,7 @@ namespace MyCAD1
                         p2 = p3.Convert2D(-direct * 250);
                         p6 = p5.Convert2D(0, 300);
                         p12 = p0.Convert2D(0, 300 / Math.Cos(rotAngle));
-                        p11 = p0.Convert2D(0, -150 + height / Math.Cos(rotAngle));
+                        p11 = p0.Convert2D(0, -100 + height / Math.Cos(rotAngle));
                         p10 = p11.Convert2D(-direct * 300, -direct * 300 * Math.Tan(rotAngle));
                         p7 = p11.Convert2D(0, 300);
                         p8 = p7.Convert2D(0, 0);

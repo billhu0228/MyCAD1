@@ -53,7 +53,9 @@ namespace MyCAD1
             Database db = doc.Database;
             Editor ed = doc.Editor;
             ObjectId paperSpace = db.CreatPaperSpace();
-            
+            MOExcel.Application app = new MOExcel.Application();
+            MOExcel.Workbook wbook = app.Workbooks.Add(Type.Missing);
+            MOExcel.Worksheet wsheet = (MOExcel.Worksheet)wbook.Worksheets[1];
 
             // 初始化带帽图列表
             string dmtpath = BPublicFunctions.GetXPath("选择带帽图数据","断面图提取文件|*.dat");
@@ -122,8 +124,8 @@ namespace MyCAD1
                     continue;
                 }
                 Point3d PointDMT = new Point3d(relatedDMT.x0, 0, 0);
-                TheDalot.W1 = relatedDMT.Wy * 1000;
-                TheDalot.W2 = relatedDMT.Wz * 1000;
+                TheDalot.W1 = relatedDMT.Wz * 1000;
+                TheDalot.W2 = relatedDMT.Wy * 1000;
                 TheDalot.H1 = relatedDMT.H1;
                 TheDalot.H2 = relatedDMT.H2;
                 TheDalot.H3 = relatedDMT.H3;
@@ -157,12 +159,12 @@ namespace MyCAD1
                 TheDalot.PlotB(db, TheDalot.BasePoint.Convert2D(0, dAB), relatedDMT.sjx, relatedDMT.dmx,
                     SJXRefPoint, DmxRefP);
                 AreaForTabe=TheDalot.PlotC(db, TheDalot.BasePoint.Convert2D(800* scaleA, dAB));
+
                 double tmpwidth = (TheDalot.FooterW == 0) ? 500 : 2000;
-
                 double dBC = 0.5 * TheDalot.Sect[0]+ TheDalot.FooterW+tmpwidth+ TheDalot.Sect[2] + 1100+5*scaleB;
-                double offC = scaleB * 240 * 0.5 - dBC;
+                double offC = scaleB * 240 * 0.5-73*scaleB;// - dBC;
 
-                Point2d centerPointC = TheDalot.BasePoint.Convert2D(800* scaleA - offC, dAB+TheDalot.Sect[2]);
+                Point2d centerPointC = TheDalot.BasePoint.Convert2D(800* scaleA - offC, dAB-22.5*scaleB+TheDalot.Sect[2]+25*scaleB);
 
 
 
@@ -194,35 +196,182 @@ namespace MyCAD1
 
                     TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
                     MText theNote = new MText();
-                    theNote.Contents =
-                        "Note:\\P" +
-                        "1.L'unité de dimension est en centimètre sauf que les cotes. \\P" +
-                        "2.Le corps du dalot est préfabriqué en segment et la tête d'ouvrage est coulés sur place. Le joint est  mis en place entre différents parties. \\P" +
-                        "3.Explication pour joint et couche d'étanchéité : \\P" +
-                        "   Joint: Le joint est rempli par bitume et filasse ou par autre matériaux d'étanchéité élastique. Le pied-droit et tablier adoptent deux couches " +
-                        "de feutre bitumé coller dessus le joint par bitume, la largeur de feutre bitumé est de 40cm. Le feutre bitumé est collé dessus le gâchis hydrofuge si le tableau est couvert par le gâchis hydrofuge.\\P" +
-                        "   Couche d'étanchéité: Pour hauteur de remblai plus de 0.5m, il faut enduire bitume avec épaisseur de 1~1.5mm deux  fois pour les partie enterrés du dalot; Pour H.remblai moins de 0.5m, " +
-                        "il faut d'abord mettre 2cm de  mortier hydrofuge sur tablier et puis enduire bitume avec épaisseur de 1~1.5mm deux fois pour les  partie enterrés du dalot. \\P" +
-                        "4.Vérifier la conformabilité entre les plans et terrain réel avant l'exécution du travaux. Il faut informer le bureau d'étude à réviser la cote s'il existe différence évidente.\\P" +
-                        "5.Annuler l'enrochement d'exutoire du dalot si sa fondation est en roche. Après l'achèvement du dalot, il faut remplir ou creuser l'amont et l'aval du dalot pour assurer l'évacuation d'eau.\\P";
-                    theNote.Location = Point3d.Origin.Convert3D(260, 100 - (1 + ii) * 297, 0);
+                    MText theNoteZH = new MText();
+                    if (TheDalot.DalotType <= DType.B)
+                    {
+                        theNote.Contents =
+                            "Note:\\P" +
+                            "1.L'unité de dimension est en centimètre sauf que les cotes. \\P" +
+                            "2.Le corps du dalot est préfabriqué en segment et la tête d'ouvrage est coulés sur place. Le joint est  mis en place entre différents parties. \\P" +
+                            "3.Explication pour joint et couche d'étanchéité : \\P" +
+                            "   Joint: Le joint est rempli par bitume et filasse ou par autre matériaux d'étanchéité élastique. Le pied-droit et tablier adoptent deux couches " +
+                            "de feutre bitumé coller dessus le joint par bitume, la largeur de feutre bitumé est de 40cm. Le feutre bitumé est collé dessus le gâchis hydrofuge si le tableau est couvert par le gâchis hydrofuge.\\P" +
+                            "   Couche d'étanchéité: Pour hauteur de remblai plus de 0.5m, il faut enduire bitume avec épaisseur de 1~1.5mm deux  fois pour les partie enterrés du dalot; Pour H.remblai moins de 0.5m, " +
+                            "il faut d'abord mettre 2cm de  mortier hydrofuge sur tablier et puis enduire bitume avec épaisseur de 1~1.5mm deux fois pour les  partie enterrés du dalot. \\P" +
+                            "4.Vérifier la conformabilité entre les plans et terrain réel avant l'exécution du travaux. Il faut informer le bureau d'étude à réviser la cote s'il existe différence évidente.\\P" +
+                            "5.Annuler l'enrochement d'exutoire du dalot si sa fondation est en roche. Après l'achèvement du dalot, il faut remplir ou creuser l'amont et l'aval du dalot pour assurer l'évacuation d'eau.\\P";
+                        theNote.Location = Point3d.Origin.Convert3D(260, 100 - (1 + ii) * 297, 0);
+
+                        theNoteZH.Contents =
+                            "注：\\P" +
+                            "1.本图尺寸除高程以米计外，其余均以厘米为单位。\\P" +
+                            "2.涵身采用节段预制施工，进出水口构造采用现浇施工，涵身之间及涵身与进出口构造之间设置接缝。\\P" +
+                            "3.涵洞接缝及防水层规定：\\P" +
+                            "  接缝：涵身接缝及涵身与进出水口构造接缝采用沥青麻絮或其他有弹性的防水材料填塞,侧面及顶面采用两层油毛毡以沥青粘贴于涵身接缝位置，油毛毡宽度40cm。对于涵顶有防水砂浆罩面的情况，油毛毡黏贴于防水砂浆之上。\\P" +
+                            "  防水层：当填土高度大于等于0.5m时，涵洞与填土接触部分涂抹热沥青两道，每道厚度约1~1.5mm；当填土高度小于0.5m时，涵洞顶部先采用2cm防水砂浆罩面，然后在涵洞与填土接触部分涂抹热沥青两道，每道厚度约1~1.5mm。\\P" +
+                            "4.施工前认真核查设计图纸与实际地形是否吻合，如有较大差别及时与设计单位联系，调整涵洞标高。\\P" +
+                            "5.如涵洞出口处地质为岩石，可取消出口处防冲碎石；涵洞施工完后，需对进出水口附近地面做适当挖填，以保证涵洞排水通畅。\\P";
+                        theNoteZH.Location = Point3d.Origin.Convert3D(43, 68 - (1 + ii) * 297, 0);
+                    }
+                    else
+                    {
+                        theNote.Contents =
+                            "Note:\\P" +
+                            "1.L'unité de dimensions est en mètre pour altitude et en centimètre pour les autres. \\P" +
+                            "2.Le dalot est fabriqué en béton coulé sur place sans joint dilatation pour le corps. \\P" +
+                            "3.Enduire bitume avec  épaisseur de 1~1.5mm deux fois entre dalot et terre de remblai. \\P" +
+                            "4.Vérifier l'identité entre les plans et terrain réel avant l'exécution de travaux. Il faut contacter  les bureaux d'étude à réviser l'altitude s'il existe différence évidente. \\P" +
+                            "5.Après finir l'exécution de travaux, il faut remplir ou creuser l'amont et l'aval de dalot pour  assurer libre évacuation d'eau. \\P";
+                        theNote.Location = Point3d.Origin.Convert3D(260, 80 - (1 + ii) * 297, 0);
+
+
+                        theNoteZH.Contents =
+                            "注：\\P" +
+                            "1.本图尺寸除高程以米计外，其余均以厘米为单位。\\P" +
+                            "2.涵洞采用现浇施工，基础岩石裸露，涵身不设置沉降缝。\\P" +
+                            "3.在涵洞与填土接触部分涂抹热沥青两道，每道厚度约1~1.5mm。\\P" +
+                            "4.施工前认真核查设计图纸与实际地形是否吻合，如有较大差别及时与设计单位联系，调整涵洞标高。\\P" +
+                            "5.涵洞施工完后，需对进出水口附近地面做适当挖填，以保证涵洞排水通畅。\\P";
+                        theNoteZH.Location = Point3d.Origin.Convert3D(43, 68 - (1 + ii) * 297, 0);
+                    }
+                    
                     theNote.TextStyleId = st["En"];
                     theNote.Width = 145;
                     btr.AppendEntity(theNote);
                     tr.AddNewlyCreatedDBObject(theNote, true);
+                    theNoteZH.TextStyleId = st["fsdb"];
+                    theNoteZH.Width = 245;
+                    btr.AppendEntity(theNoteZH);
+                    tr.AddNewlyCreatedDBObject(theNoteZH, true);
 
 
-                    
                     tr.Commit();
                 }
 
 
                 //  表格
 
-                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot,relatedDMT, Parameters, AreaForTabe);
+                TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot,relatedDMT, Parameters, AreaForTabe,wsheet,ii+4);
+                // 图名图号
+                TextPloter.PrintNumTitle(db, Point3d.Origin.Convert3D(0, -(ii + 1) * 297),TheDalot );
 
             }
 
+
+            // 制作表头 储存汇总数量表
+
+            wsheet.Cells[1, 1] = "No";
+            MOExcel.Range range = wsheet.get_Range("A1", "A4"); 
+            range.Merge(0);
+            wsheet.Cells[1, 2] = "PK";
+            range = wsheet.get_Range("B1", "B4");
+            range.Merge(0);
+            wsheet.Cells[1, 3] = "Type\nd'ouvrage";
+            range = wsheet.get_Range("C1", "C4");
+            range.Merge(0);
+            wsheet.Cells[1, 4] = "Dimension";
+            range = wsheet.get_Range("D1", "D3");
+            range.Merge(0);
+            wsheet.Cells[4, 4] = "m";
+            wsheet.Cells[1, 5] = "Biais";
+            range = wsheet.get_Range("E1", "E3");
+            range.Merge(0);
+            wsheet.Cells[4, 5] = "°";
+            wsheet.Cells[1, 6] = "L.";
+            range = wsheet.get_Range("F1", "F3");
+            range.Merge(0);
+            wsheet.Cells[4, 6] = "m";
+            wsheet.Cells[1, 7] = "Type d'éntrée et de\nsortie";
+            range = wsheet.get_Range("G1", "H2");
+            range.Merge(0);
+            wsheet.Cells[3, 7] = "Amont";
+            range = wsheet.get_Range("G3", "G4");
+            range.Merge(0);
+            wsheet.Cells[3, 8] = "Aval";
+            range = wsheet.get_Range("H3", "H4");
+            range.Merge(0);
+            wsheet.Cells[2, 9] = "Corps";
+            range = wsheet.get_Range("I2", "K2");
+            range.Merge(0);
+            wsheet.Cells[3,9] = "Béton\n(C25/30)";
+            wsheet.Cells[4, 9] = "m3";
+            wsheet.Cells[4, 9].Characters[2,1].Font.Superscript = true;
+            wsheet.Cells[3, 10] = "Armature\n(FeE 400)";
+            wsheet.Cells[4, 10] = "kg";
+            wsheet.Cells[3, 11] = "Quantité de segment de\nprefabriquation,transport et\nlevage";
+            wsheet.Cells[4, 11] = "bloc";
+            wsheet.Cells[2, 12] = "Entrée et sortie";
+            range = wsheet.get_Range("L2", "O2");
+            range.Merge(0);
+            wsheet.Cells[3, 12] = "Puit déau\n(C25/30)";
+            wsheet.Cells[4, 12] = "m3";
+            wsheet.Cells[4, 12].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 13] = "Mur en aile\n(C25/30)";
+            wsheet.Cells[4, 13] = "m3";
+            wsheet.Cells[4, 13].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 14] = "Guide roue\n(C25/30)";
+            wsheet.Cells[4, 14] = "m3";
+            wsheet.Cells[4, 14].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 15] = "Armature\n(FeE 400)";
+            wsheet.Cells[4, 15] = "kg";
+            wsheet.Cells[2, 16] = "Foundation";
+            range = wsheet.get_Range("P2", "Q2");
+            range.Merge(0);
+            wsheet.Cells[3, 16] = "Béton\n(C25/30)";
+            wsheet.Cells[4, 16] = "m3";
+            wsheet.Cells[4, 16].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 17] = "Graveleux\nlatérique";
+            wsheet.Cells[4, 17] = "m3";
+            wsheet.Cells[4, 17].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[2, 18] = "Etanchéité";
+            range = wsheet.get_Range("R2", "T2");
+            range.Merge(0);
+            wsheet.Cells[3, 18] = "Badigeonnage\ndes parements";
+            wsheet.Cells[4, 18] = "m2";
+            wsheet.Cells[4, 18].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 19] = "Motier\nhydro";
+            wsheet.Cells[4, 19] = "m2";
+            wsheet.Cells[4, 19].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 20] = "Joint";
+            wsheet.Cells[4, 20] = "m2";
+            wsheet.Cells[4, 20].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[2, 21] = "Terrassement";
+            range = wsheet.get_Range("U2", "W2");
+            range.Merge(0);
+            wsheet.Cells[3, 21] = "Déblai";
+            wsheet.Cells[4, 21] = "m3";
+            wsheet.Cells[4, 21].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 22] = "Remblaiement au\ndos des ponceaux";
+            wsheet.Cells[4, 22] = "m3";
+            wsheet.Cells[4, 22].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[3, 23] = "Enrochement";
+            wsheet.Cells[4, 23] = "m3";
+            wsheet.Cells[4, 23].Characters[2, 1].Font.Superscript = true;
+            wsheet.Cells[1, 9] = "Quantité des travaux";
+            range = wsheet.get_Range("I1", "W1");
+            range.Merge(0);
+
+            wsheet.Columns.EntireColumn.AutoFit();
+            wsheet.Cells.HorizontalAlignment = MOExcel.XlHAlign.xlHAlignCenter;//水平居中  
+            wsheet.Cells.VerticalAlignment = MOExcel.XlVAlign.xlVAlignCenter;//垂直居中  
+
+            string bb =Path.Combine(Path.GetDirectoryName(aa), "数量汇总表");          
+            wsheet.SaveAs(bb, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+            wbook.Close(false, Type.Missing, Type.Missing);
+            Marshal.ReleaseComObject(wbook);
+            wbook = null;
+            app.Workbooks.Close();
+            app.KillExcelApp();
         }
 
 
@@ -249,6 +398,7 @@ namespace MyCAD1
             double c = (double)theData["c"];
             double w = (double)theData["w"];
             double h = (double)theData["h"];
+            string design = (string)theData["DesignNo"];
             DType theType = DType.A;
             if (c == 1)
             {
@@ -310,7 +460,7 @@ namespace MyCAD1
             int sA = (int)(double)theData["ScaleA"];
             int sB = (int)(double)theData["ScaleB"];
 
-            Dalot res = new Dalot(Dalot.PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerThick, LayerWidth, H0, sA, sB, cistri);
+            Dalot res = new Dalot(Dalot.PkString2Double(Pk), Ang, Slop, Length, SegLength, XMidDist, theType, cAtype, BasePoint, LayerThick, LayerWidth, H0, sA, sB, cistri, design);
             return res;
         }
 
@@ -346,7 +496,7 @@ namespace MyCAD1
                         if (!string.IsNullOrEmpty(txt)) name = txt;
                     }
                     while (dt.Columns.Contains(name)) name = name + "_1";//重复行名称会报错。
-                    if (name == "pk" || name == "Amont")
+                    if (name == "pk" || name == "Amont"||name=="DesignNo")
                     {
                         dt.Columns.Add(new System.Data.DataColumn(name, typeof(string)));
                     }

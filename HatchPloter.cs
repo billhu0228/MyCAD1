@@ -33,14 +33,20 @@ namespace MyCAD1
                 BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                     OpenMode.ForWrite) as BlockTableRecord;
 
+                hatch1.SetHatchPattern(href.PatternType, href.PatternName);
                 modelSpace.AppendEntity(hatch1);
                 tr.AddNewlyCreatedDBObject(hatch1, true);
-
-                hatch1.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });
-                hatch1.PatternScale = 1;
-                hatch1.Layer = "标注";
-                hatch1.SetHatchPattern(href.PatternType, href.PatternName);
+                hatch1.PatternScale = href.PatternScale;
+                hatch1.Layer = "填充";
+                hatch1.Associative = true;
+                hatch1.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });                
                 hatch1.EvaluateHatch(true);
+
+                
+                hatch1.PatternScale = href.PatternScale;
+                hatch1.SetHatchPattern(hatch1.PatternType, hatch1.PatternName);
+
+
                 tr.Commit();
             }
             return hatch1;
@@ -48,7 +54,7 @@ namespace MyCAD1
         }
 
 
-        public static void PlotLayerOne(Database db,Point2d p1,Point2d p2,Hatch href,double offset=0,double tk=100,double scale=1,bool isVetica = false)
+        public static Polyline PlotLayerOne(Database db,Point2d p1,Point2d p2,Hatch href,double offset=0,double tk=100,double scale=1,bool isVetica = false)
         {
             Hatch hat = new Hatch();
             Polyline PL = new Polyline();
@@ -80,20 +86,24 @@ namespace MyCAD1
                 PL.Layer = "细线";
                 modelSpace.AppendEntity(PL);
                 tr.AddNewlyCreatedDBObject(PL, true);
+            
 
+                hat.SetHatchPattern(href.PatternType, href.PatternName);
                 modelSpace.AppendEntity(hat);
                 tr.AddNewlyCreatedDBObject(hat, true);
-
+                hat.PatternScale = href.PatternScale;
+                hat.Layer = "填充";
+                hat.Associative = true;
                 hat.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { PL.ObjectId });
-                hat.PatternScale = 1;
-                hat.Layer = "标注";
-                hat.SetHatchPattern(href.PatternType, href.PatternName);
                 hat.EvaluateHatch(true);
+
+                hat.PatternScale = href.PatternScale;
+                hat.SetHatchPattern(hat.PatternType, hat.PatternName);
                 tr.Commit();
             }
 
 
-            return;
+            return PL;
 
         }
     }

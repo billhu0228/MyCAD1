@@ -59,7 +59,7 @@ namespace MyCAD1
             // Get the current document and database
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
-            Editor ed = acDoc.Editor;            
+            Editor ed = acDoc.Editor;
             // Start a transaction
             using (Transaction tr = acCurDb.TransactionManager.StartTransaction())
             {
@@ -70,6 +70,7 @@ namespace MyCAD1
                     ["标注"] = 7,
                     ["中心线"] = 1,
                     ["虚线"] = 3,
+                    ["填充"] = 8,
                     ["图框"] = 8,
                 };
                 List<string> Lname = new List<string>() { "CENTER", "DASHED" };
@@ -77,7 +78,7 @@ namespace MyCAD1
                 acLyrTbl = tr.GetObject(acCurDb.LayerTableId, OpenMode.ForRead) as LayerTable;
                 LinetypeTable acLinTbl;
                 acLinTbl = tr.GetObject(acCurDb.LinetypeTableId, OpenMode.ForRead) as LinetypeTable;
-                foreach(string ltname in Lname)
+                foreach (string ltname in Lname)
                 {
                     if (!acLinTbl.Has(ltname))
                     {
@@ -96,7 +97,7 @@ namespace MyCAD1
                         else { acLyrTblRec.LineWeight = LineWeight.LineWeight030; }
                         if (cid == 1) { acLyrTblRec.LinetypeObjectId = acLinTbl["CENTER"]; }
                         if (cid == 3) { acLyrTblRec.LinetypeObjectId = acLinTbl["DASHED"]; }
-                        if (cid == 8) { acLyrTblRec.IsPlottable = false; }
+                        if (key == "图框") { acLyrTblRec.IsPlottable = false; }
                         acLyrTblRec.Name = key;
                         if (acLyrTbl.IsWriteEnabled == false) acLyrTbl.UpgradeOpen();
                         acLyrTbl.Add(acLyrTblRec);
@@ -110,7 +111,7 @@ namespace MyCAD1
                         else { acLyrTblRec.LineWeight = LineWeight.LineWeight030; }
                         if (cid == 1) { acLyrTblRec.LinetypeObjectId = acLinTbl["CENTER"]; }
                         if (cid == 3) { acLyrTblRec.LinetypeObjectId = acLinTbl["DASHED"]; }
-                        if (cid == 8) { acLyrTblRec.IsPlottable = false; }
+                        if (key == "图框") { acLyrTblRec.IsPlottable = false; }
                     }
                 }
                 if (!acLyrTbl.Has("sjx"))
@@ -137,7 +138,7 @@ namespace MyCAD1
 
                 //-------------------------------------------------------------------------------------------
                 TextStyleTable st = tr.GetObject(acCurDb.TextStyleTableId, OpenMode.ForWrite) as TextStyleTable;
-                if(!st.Has("EN"))
+                if (!st.Has("EN"))
                 {
                     TextStyleTableRecord str = new TextStyleTableRecord()
                     {
@@ -162,7 +163,7 @@ namespace MyCAD1
                         FileName = "fsdb_e.shx",
                         BigFontFileName = "fsdb.shx",
                         XScale = 0.75,
-                };
+                    };
                     ObjectId textstyleid = st.Add(str2);
                     tr.AddNewlyCreatedDBObject(str2, true);
                 }
@@ -175,7 +176,7 @@ namespace MyCAD1
                 }
                 //-------------------------------------------------------------------------------------------
                 DimStyleTable dst = (DimStyleTable)tr.GetObject(acCurDb.DimStyleTableId, OpenMode.ForWrite);
-                foreach (int thescale in new int[] { 75, 100,125,150,200 })
+                foreach (int thescale in new int[] { 75, 100, 125, 150, 200 })
                 {
                     string scname = "1-" + thescale.ToString();
                     DimStyleTableRecord dstr = new DimStyleTableRecord();
@@ -191,7 +192,7 @@ namespace MyCAD1
                         dstr.Dimexo = 1.0;
                         dstr.DimfxlenOn = true;
                         dstr.Dimfxlen = 4;
-                        dstr.Dimtxt = 2;
+                        dstr.Dimtxt = 2.5;
                         dstr.Dimasz = 1.5;
                         dstr.Dimtix = true;
                         dstr.Dimtmove = 1;
@@ -218,7 +219,7 @@ namespace MyCAD1
                         dstr.Dimexo = 1.0;
                         dstr.DimfxlenOn = true;
                         dstr.Dimfxlen = 4;
-                        dstr.Dimtxt = 2;
+                        dstr.Dimtxt = 2.5;
                         dstr.Dimasz = 1.5;
                         dstr.Dimtix = true;
                         dstr.Dimtmove = 1;
@@ -245,8 +246,8 @@ namespace MyCAD1
                     tr.AddNewlyCreatedDBObject(btr, true);
                     Polyline Paa = new Polyline()
                     {
-                        Color = Color.FromColorIndex(ColorMethod.ByAci, 9),
-                        Layer = "标注",
+                        //Color = Color.FromColorIndex(ColorMethod.ByAci, 9),
+                        //Layer = "标注",
                     };
                     Paa.AddVertexAt(0, new Point2d(0, 0), 0, 0, 200);
                     Paa.AddVertexAt(1, new Point2d(0, 200), 0, 0, 0);
@@ -254,10 +255,10 @@ namespace MyCAD1
                     tr.AddNewlyCreatedDBObject(Paa, true);
                     AttributeDefinition curbg = new AttributeDefinition();
                     curbg.Position = new Point3d(120, 200, 0);
-                    curbg.Height = 200;
+                    curbg.Height = 250;
                     curbg.WidthFactor = 0.75;
                     curbg.Tag = "标高";
-                    curbg.Layer = "标注";
+                    //curbg.Layer = "标注";
                     curbg.TextStyleId = st["fsdb"];
                     btr.AppendEntity(curbg);
                     tr.AddNewlyCreatedDBObject(curbg, true);
@@ -276,12 +277,12 @@ namespace MyCAD1
                     };
                     Paa2.AddVertexAt(0, new Point2d(0 - 350, 0), 0, 0, 80);
                     Paa2.AddVertexAt(1, new Point2d(200 - 350, 0), 0, 0, 0);
-                    Paa2.AddVertexAt(2, new Point2d(700 - 350, 0), 0, 0, 0);
+                    Paa2.AddVertexAt(2, new Point2d(900 - 350, 0), 0, 0, 0);
                     btr2.AppendEntity(Paa2);
                     tr.AddNewlyCreatedDBObject(Paa2, true);
                     AttributeDefinition curzp = new AttributeDefinition();
                     curzp.Position = new Point3d(220 - 350, 0, 0);
-                    curzp.Height = 200;
+                    curzp.Height = 250;
                     curzp.WidthFactor = 0.75;
                     curzp.Tag = "左坡";
                     curzp.TextStyleId = st["fsdb"];
@@ -303,14 +304,14 @@ namespace MyCAD1
                     };
                     Paa3.AddVertexAt(0, new Point2d(0 + 350, 0), 0, 0, 80);
                     Paa3.AddVertexAt(1, new Point2d(-200 + 350, 0), 0, 0, 0);
-                    Paa3.AddVertexAt(2, new Point2d(-700 + 350, 0), 0, 0, 0);
+                    Paa3.AddVertexAt(2, new Point2d(-900 + 350, 0), 0, 0, 0);
                     btr3.AppendEntity(Paa3);
                     tr.AddNewlyCreatedDBObject(Paa3, true);
                     AttributeDefinition curyp = new AttributeDefinition();
                     curyp.Position = new Point3d(-220 + 350, 0, 0);
                     curyp.HorizontalMode = TextHorizontalMode.TextRight;
                     curyp.AlignmentPoint = curyp.Position;
-                    curyp.Height = 200;
+                    curyp.Height = 250;
                     curyp.WidthFactor = 0.75;
                     curyp.Tag = "右坡";
                     curyp.TextStyleId = st["fsdb"];
@@ -335,7 +336,7 @@ namespace MyCAD1
 
 
             string output = Path.ChangeExtension(doc.Name, "dat");
-            
+
             if (doc == null)
                 return;
             var ed = doc.Editor;
@@ -361,7 +362,7 @@ namespace MyCAD1
                     {
                         WriteMessage(output, "#------------------------------------------------------#");
                         map.Add(id, id.TextString);
-                        WriteMessage(output, id.TextString);                        
+                        WriteMessage(output, id.TextString);
                     }
                     if (id.Layer == "右标高1")
                     {
@@ -427,7 +428,7 @@ namespace MyCAD1
             foreach (var item in sorted)
             {
                 ed.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
-                
+
             }
 
 
@@ -439,12 +440,12 @@ namespace MyCAD1
 
         }
 
-        
+
         [CommandMethod("textext", CommandFlags.UsePickSet)]
         public static void TextExe()
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;            
+            Database db = doc.Database;
 
             if (doc == null)
                 return;
@@ -484,7 +485,7 @@ namespace MyCAD1
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
             Transaction tr = db.TransactionManager.StartTransaction();
-                       
+
 
             if (doc == null)
                 return;
@@ -498,9 +499,9 @@ namespace MyCAD1
 
             PromptResult oldText = ed.GetString("\n请输入需替换文字");
             PromptResult newText = ed.GetString("\n替换为");
-            
+
             int counter = 0;
-            
+
             foreach (dynamic id in psr.Value.GetObjectIds())
             {
                 if (id.ObjectClass.Name == "AcDbText")
@@ -516,7 +517,7 @@ namespace MyCAD1
             {
                 ed.WriteMessage("\n{0}处文字被成功替换", counter);
             }
-            
+
             tr.Commit();
             tr.Dispose();
         }
@@ -528,7 +529,7 @@ namespace MyCAD1
         {
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
-            
+
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
                 if (doc == null)
@@ -557,21 +558,15 @@ namespace MyCAD1
                 {
                     ed.WriteMessage("\n共选择{0}个直线，合计长度{1:0.0}", counter, sumup);
                 }
-                tr.Commit();               
+                tr.Commit();
             }
         }
 
-        
+
 
 
 
         //-------------------------------------------------------------------------------------------
-
-
-
-
-
-
         /// <summary>
         /// 输出指定信息到文本文件
         /// </summary>
@@ -590,14 +585,39 @@ namespace MyCAD1
             }
         }
 
-        
 
+        //-------------------------------------------------------------------------------------------
+        [CommandMethod("bXdata", CommandFlags.UsePickSet)]
+        public static void my_GetXData()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                if (doc == null)
+                    return;
+                var ed = doc.Editor;
 
+                PromptSelectionOptions Opts = new PromptSelectionOptions();
+                Opts.MessageForAdding = "\n请选择对象";
+                var psr = ed.GetSelection(Opts);
+                if (psr.Status != PromptStatus.OK)
+                    return;
 
-
-
-
-
-
+                foreach (dynamic id in psr.Value.GetObjectIds())
+                {
+                    DBObject oldObj = tr.GetObject(id, OpenMode.ForRead);
+                    if (oldObj.XData != null)
+                    {
+                        var ff = oldObj.XData.AsArray();
+                        foreach (TypedValue tv in ff)
+                        {
+                            ed.WriteMessage("\n{0}", tv.Value);
+                        }
+                    }
+                    tr.Commit();
+                }
+            }
+        }
     }
 }

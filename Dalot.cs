@@ -37,11 +37,11 @@ namespace MyCAD1
         public int ScaleA, ScaleB;
         public double MouthT, PlateT;//伸出嘴厚度，底板厚度
         public double FooterW;
-
+        public string DesignNo;
                
 
         public Dalot(double cPk, double cAng, double cSlop, double cLength, double cSegLength, double cXMidDist,
-            DType cDalotType, AType cAmont, Point2d cBasePoint, double cLayerT,double cLayerW, double cdH, int cscaleA, int cscaleB, bool isTri)            
+            DType cDalotType, AType cAmont, Point2d cBasePoint, double cLayerT,double cLayerW, double cdH, int cscaleA, int cscaleB, bool isTri,string cDesignNo)            
         {
             Pk = cPk;
             Ang = cAng;
@@ -57,6 +57,7 @@ namespace MyCAD1
             ScaleA = cscaleA;
             ScaleB = cscaleB;
             FooterW = 0;
+            DesignNo = cDesignNo;
             switch (DalotType)
             {
                 case DType.A:
@@ -114,7 +115,7 @@ namespace MyCAD1
             var DimStyleID = dst["1-" + s.ToString()];
             Hatch hatchref4 = new Hatch();
             hatchref4.SetHatchPattern(HatchPatternType.PreDefined, "GRAVEL");
-            hatchref4.PatternScale = 1;
+            hatchref4.PatternScale = 15;            
             Point3dCollection pts = new Point3dCollection();  // 交点获取
             double ang_in_rad = 0 / 180 * Math.PI;
             double road_ang = (90-Ang) / 180 * Math.PI;
@@ -160,10 +161,10 @@ namespace MyCAD1
                 {
                     LeftPolylineSet = PolylinePloter.PlotWallPlan(db, LSets, Sect[0], true,s);
                     DimPloter.Dim0(db, LeftPolylineSet[2].GetPoint3dAt(0), LeftPolylineSet[2].GetPoint3dAt(1),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     DimPloter.Dim0(db, LeftPolylineSet[2].GetPoint3dAt(1), LeftPolylineSet[0].GetPoint3dAt(0),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID, ang_in_rad);
-                    DimPloter.Dim0(db, LSets[0].StartPoint, LSets[0].EndPoint, LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID, ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID, ang_in_rad);
+                    DimPloter.Dim0(db, LSets[0].StartPoint, LSets[0].EndPoint, LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID, ang_in_rad);
                     DimPloter.Dim0(db, LeftPolylineSet[0].GetPoint3dAt(4), LeftPolylineSet[0].GetPoint3dAt(5),
                         LeftPolylineSet[0].GetPoint3dAt(5).Convert3D(-500, 0), DimStyleID, 0.5 * Math.PI+ ang_in_rad);
                     DimPloter.Dim0(db, LeftPolylineSet[4].GetPoint3dAt(1), LeftPolylineSet[0].GetPoint3dAt(0),
@@ -177,9 +178,9 @@ namespace MyCAD1
                     // 出口
                     RightPolylineSet = PolylinePloter.PlotWallPlan(db, LSets, Sect[0], false,s);
                     DimPloter.Dim0(db, LSets[0].EndPoint, RightPolylineSet[2].GetPoint3dAt(1),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     DimPloter.Dim0(db, RightPolylineSet[2].GetPoint3dAt(1), RightPolylineSet[2].GetPoint3dAt(0),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID, ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID, ang_in_rad);
                     DimPloter.Dim0(db, RightPolylineSet[4].GetPoint3dAt(1), RightPolylineSet[0].GetPoint3dAt(0),
                         RightPolylineSet[0].GetPoint3dAt(0).Convert3D(1500, 0), DimStyleID, -120.0 / 180.0 * Math.PI+ ang_in_rad);
 
@@ -227,16 +228,16 @@ namespace MyCAD1
                 {
                     LeftPolyline = PolylinePloter.PlotWellPlan(db, LSets, Sect[0], true);
                     DimPloter.Dim0(db, LeftPolyline.GetPoint3dAt(1), LeftPolyline.GetPoint3dAt(0).Convert3D(200),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
-                    DimPloter.Dim0(db, LSets[0].StartPoint, LSets[0].EndPoint, LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
+                    DimPloter.Dim0(db, LSets[0].StartPoint, LSets[0].EndPoint, LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
 
 
                     // 出口
                     RightPolylineSet = PolylinePloter.PlotWallPlan(db, LSets, Sect[0], false,s  );
                     DimPloter.Dim0(db, LSets[0].EndPoint, RightPolylineSet[2].GetPoint3dAt(1),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     DimPloter.Dim0(db, RightPolylineSet[2].GetPoint3dAt(1), RightPolylineSet[2].GetPoint3dAt(0),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     DimPloter.DimAng(db, LSets[1], RightPolylineSet[4].GetLine(1), LSets[1].EndPoint.Convert3D(1000, -10 + 1000 * Math.Sin(ang_in_rad)), DimStyleID);
                     DimPloter.DimAng(db, LSets[2], RightPolylineSet[3].GetLine(1), LSets[2].EndPoint.Convert3D(1000, 10 + 1000 * Math.Sin(ang_in_rad)), DimStyleID);
                     DimPloter.Dim0(db, RightPolylineSet[4].GetPoint3dAt(1), RightPolylineSet[0].GetPoint3dAt(0),
@@ -273,14 +274,14 @@ namespace MyCAD1
                 {
                     RightPolyline = PolylinePloter.PlotWellPlan(db, LSets, Sect[0], false);
                     DimPloter.Dim0(db, RightPolyline.GetPoint3dAt(1), RightPolyline.GetPoint3dAt(0).Convert3D(-200),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     // 出口
                     LeftPolylineSet = PolylinePloter.PlotWallPlan(db, LSets, Sect[0], true,s);
                     DimPloter.Dim0(db, LeftPolylineSet[2].GetPoint3dAt(0), LeftPolylineSet[2].GetPoint3dAt(1),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     DimPloter.Dim0(db, LeftPolylineSet[2].GetPoint3dAt(1), LeftPolylineSet[0].GetPoint3dAt(0),
-                        LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
-                    DimPloter.Dim0(db, LSets[0].StartPoint, LSets[0].EndPoint, LSets[0].EndPoint.Convert3D(0, -20 * s), DimStyleID,ang_in_rad);
+                        LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
+                    DimPloter.Dim0(db, LSets[0].StartPoint, LSets[0].EndPoint, LSets[0].EndPoint.Convert3D(0, -26 * s), DimStyleID,ang_in_rad);
                     DimPloter.Dim0(db, LeftPolylineSet[0].GetPoint3dAt(4), LeftPolylineSet[0].GetPoint3dAt(5),
                         LeftPolylineSet[0].GetPoint3dAt(5).Convert3D(-500, 0), DimStyleID, 0.5 * Math.PI+ang_in_rad);
                     DimPloter.DimAng(db, LSets[2], LeftPolylineSet[3].GetLine(1), 
@@ -335,21 +336,6 @@ namespace MyCAD1
             }
 
 
-
-
-            //路基
-            //pts.Clear();
-            //Line[] RoadSets = MulitlinePloter.PlotN(db, minPoint.Convert3D(), minPoint.Convert3D(maxPoint.X - minPoint.X, 0),
-            //    new double[] { 0, maxPoint.Y - minPoint.Y }, new string[] { "虚线", "虚线" }, true);
-            //double SideDistLeft = AnchorPoint.X - minPoint.X - W1;
-            //double SiedDistRight = maxPoint.X - AnchorPoint.X - W2;
-            //Line[] SideSets = MulitlinePloter.PlotCutLine(db, RoadSets[0], RoadSets[1],
-            //    new double[] { 0, SideDistLeft, SideDistLeft + W1 + W2, maxPoint.X - minPoint.X }, "细线", true);                        
-            //MulitlinePloter.PlotSideLine(db, SideSets[1], LSets[0], LSets[LSets.Length - 1], s, true);
-            //MulitlinePloter.PlotSideLine(db, SideSets[2], LSets[0], LSets[LSets.Length - 1], s, false);
-
-
-            // 中心线  和 路基
 
             Line RoadCenter = new Line(AnchorPoint.Convert3D(), AnchorPoint.Convert3D(1));
             RoadCenter.TransformBy(Matrix3d.Rotation(road_ang,Vector3d.ZAxis,AnchorPoint.Convert3D()));
@@ -466,8 +452,16 @@ namespace MyCAD1
 
             //标题
             maxPoint = maxPoint.Convert2D(0, 15 * s);
-            TextPloter.DimSection(db, 'A', AnchorPoint.Convert2D((minPoint.X - 10 * s)*Math.Cos(ang_in_rad),( minPoint.X - 10 * s)*Math.Sin(ang_in_rad))
-                , AnchorPoint.Convert2D((maxPoint.X + 5 * s)*Math.Cos(ang_in_rad),( maxPoint.X + 5 * s)*Math.Sin(ang_in_rad)), s);
+            if (Slop < 0)//右出口
+            {
+                TextPloter.DimSection(db, 'A', AnchorPoint.Convert2D((minPoint.X - 10 * s) * Math.Cos(ang_in_rad), (minPoint.X - 10 * s) * Math.Sin(ang_in_rad)),
+                    AnchorPoint.Convert2D((maxPoint.X +1500+ 5 * s) * Math.Cos(ang_in_rad), (maxPoint.X+1500 + 5 * s) * Math.Sin(ang_in_rad)), s);
+            }
+            else
+            {
+                TextPloter.DimSection(db, 'A', AnchorPoint.Convert2D((minPoint.X -1000- 10 * s) * Math.Cos(ang_in_rad), (minPoint.X-1000 - 10 * s) * Math.Sin(ang_in_rad)),
+                    AnchorPoint.Convert2D((maxPoint.X + 5 * s) * Math.Cos(ang_in_rad), (maxPoint.X + 5 * s) * Math.Sin(ang_in_rad)), s);
+            }
             double dymax = maxPoint.Y - AnchorPoint.Y;
             double dymin = minPoint.Y - AnchorPoint.Y;
             TextPloter.PrintTitle(db, "VUE EN PLAN", AnchorPoint.Convert2D(0, dymax - 5*s), s);
@@ -512,17 +506,24 @@ namespace MyCAD1
             // 填充
             Hatch hatchref1 = new Hatch();
             hatchref1.SetHatchPattern(HatchPatternType.PreDefined, "ANSI31");
+            hatchref1.PatternScale = 15;
             Hatch hatchref2 = new Hatch();
             hatchref2.SetHatchPattern(HatchPatternType.PreDefined, "AR-SAND");
+            hatchref2.PatternScale = 3;
             Hatch hatchref3 = new Hatch();
             hatchref3.SetHatchPattern(HatchPatternType.PreDefined, "AR-CONC");
+            hatchref3.PatternScale = 1;
             Hatch hatchref4 = new Hatch();
-            hatchref4.SetHatchPattern(HatchPatternType.PreDefined, "GRAVEL");
-            hatchref4.PatternScale = 1;
+            hatchref4.SetHatchPattern(HatchPatternType.PreDefined, "GRAVEL");            
+            hatchref4.PatternScale = 15;
             double delt1 = (H1 - H0) * 1000;
             double delt2 = (H2 - H0) * 1000;
             double delt3 = (H3 - H0) * 1000;
-
+            //Polyline pltmp;
+            Polyline DianCengL = new Polyline();
+            Polyline DianCengR = new Polyline();
+            Polyline hddc = new Polyline();
+            Polyline hddc2 = new Polyline();
 
 
             if (DalotType <= DType.E)
@@ -534,17 +535,24 @@ namespace MyCAD1
                 y0 = -XMidDist * Math.Sin(slop_rad);
                 y1 = (Length - XMidDist) * Math.Sin(slop_rad);
                 bool tmp_vet = false;
-                if (Sect[2] >= 2800)
+                double LayerAdd = 0;
+                if (Sect[2] >= 2800 )
                 {
                     tmp_vet = true;
+                    if (LayerT != 0)
+                    {
+                        LayerAdd += 100;
+                    }
                 }
 
                 LSets = MulitlinePloter.PlotN(db, AnchorPoint.Convert3D(x0, y0), AnchorPoint.Convert3D(x1, y1),  // 涵身
                     new double[] { 0-Sect[3],0, Sect[2] - Sect[4] - Sect[3], Sect[2] - Sect[3] }, new string[] { "粗线", "粗线", "粗线", "粗线" }, tmp_vet);
                 CutLineSets=MulitlinePloter.PlotCutLine(db, LSets[0], LSets[LSets.Length - 1], GetSeps(), "粗线", tmp_vet);
 
-                HatchPloter.PlotLayerOne(db, LSets[0].StartPoint.Convert2D(), LSets[0].EndPoint.Convert2D(), hatchref3,0, 100,1, tmp_vet);
-                HatchPloter.PlotLayerOne(db, LSets[0].StartPoint.Convert2D(), LSets[0].EndPoint.Convert2D(), hatchref2,100,LayerT, 1, tmp_vet);
+                hddc=HatchPloter.PlotLayerOne(db, LSets[0].StartPoint.Convert2D(), LSets[0].EndPoint.Convert2D(), hatchref3,0, 100,1, tmp_vet);
+                MulitlinePloter.PlotCutLine(db, hddc.GetLine(2), hddc.GetLine(0), GetSeps(), "粗线", tmp_vet);
+                hddc2=HatchPloter.PlotLayerOne(db, LSets[0].StartPoint.Convert2D(), LSets[0].EndPoint.Convert2D(), hatchref2,100,LayerT, 1, tmp_vet);
+                
                 DimPloter.DimAli(db, LSets[3].StartPoint, LSets[3].EndPoint, LSets[3].EndPoint.Convert3D(0, 1000), DimStyleID);
                 DimPloter.HengPo(db, Slop * 100, AnchorPoint.Convert3D(2000, 2000 * Slop + 1 * s), (Slop > 0), s);
                 DimPloter.BiaoGao(H0 + (LSets[1].StartPoint.Y - AnchorPoint.Y) / 1000, LSets[1].StartPoint, modelSpace, tr, blockTbl, s);
@@ -552,21 +560,21 @@ namespace MyCAD1
                 TextPloter.PrintCirText(db, (int)Sect[5] / 10, AnchorPoint.Convert2D(-5*s, 3*s),
                     LSets[1].StartPoint.Convert2D(), LSets[LSets.Length - 2].EndPoint.Convert2D(), s);
 
-                if (CutLineSets.Length == 2)
+                if (CutLineSets.Length == 3)
                 {
-                    TextPloter.PrintLineText(db, CutLineSets[0].GetXPoint2d(0.3), CutLineSets[0].GetXPoint2d(0.3,2 * s, 3 * s), 
+                    TextPloter.PrintLineText(db, CutLineSets[0].GetXPoint2d(0.6), CutLineSets[0].GetXPoint2d(0.6,2 * s, 3 * s), 
                         new string[] { "Joint,e=2.0cm" }, false, s);
-                    TextPloter.PrintLineText(db, CutLineSets[1].GetXPoint2d(0.3), CutLineSets[1].GetXPoint2d(0.3,-2 * s, 3 * s),
+                    TextPloter.PrintLineText(db, CutLineSets[1].GetXPoint2d(0.6), CutLineSets[1].GetXPoint2d(0.6,-2 * s, 3 * s),
                         new string[] { "Joint,e=2.0cm" }, true, s);
                 }
                 else
                 {
-                    TextPloter.PrintLineText(db, CutLineSets[0].GetXPoint2d(0.3), CutLineSets[0].GetXPoint2d(0.3,2 * s, 3 * s),
+                    TextPloter.PrintLineText(db, CutLineSets[0].GetXPoint2d(0.6), CutLineSets[0].GetXPoint2d(0.6,2 * s, 3 * s),
                         new string[] { "Joint,e=1.5cm" }, false, s);
                     TextPloter.PrintLineText(db, CutLineSets[CutLineSets.Length - 1].GetXPoint2d(0.3),
-                        CutLineSets[CutLineSets.Length - 1].GetXPoint2d(0.3,-2 * s, 3 * s), new string[] { "Joint,e=1.5cm" }, true, s);
+                        CutLineSets[CutLineSets.Length - 1].GetXPoint2d(0.6,-2 * s, 3 * s), new string[] { "Joint,e=1.5cm" }, true, s);
                     int num = CutLineSets.Length / 2;
-                    TextPloter.PrintLineText(db, CutLineSets[num].GetXPoint2d(0.3), CutLineSets[num].GetXPoint2d(0.3,2 * s, 3 * s),
+                    TextPloter.PrintLineText(db, CutLineSets[num].GetXPoint2d(0.6), CutLineSets[num].GetXPoint2d(0.6,2 * s, 3 * s),
                         new string[] { "Joint,e=1.5cm" }, false, s);
                 }
 
@@ -591,13 +599,13 @@ namespace MyCAD1
                     Hat1.Layer = "细线";
                     HatchPloter.PlotH(db, Hat1, hatchref1, 1);
                     HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1), Wall_left.GetPoint2dAt(0), hatchref3,0, 100, 1, tmp_vet);
-                    HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1), Wall_left.GetPoint2dAt(0), hatchref2,100, LayerT,1, tmp_vet);
+                    DianCengL=HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1), Wall_left.GetPoint2dAt(0), hatchref2,100, LayerT+ LayerAdd, 1, tmp_vet);                    
 
                     // 标注
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(6), Wall_left.GetPoint3dAt(5), Wall_left.GetPoint3dAt(4).Convert3D(-5 * s, 0), DimStyleID);
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(5), Wall_left.GetPoint3dAt(4), Wall_left.GetPoint3dAt(4).Convert3D(-5 * s, 0), DimStyleID);
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(4), Wall_left.GetPoint3dAt(3), Wall_left.GetPoint3dAt(4).Convert3D(-5 * s, 0), DimStyleID);
-                    DimPloter.DimAli(db, Hat1.GetPoint3dAt(3), Hat1.GetPoint3dAt(2), Wall_left.GetPoint3dAt(4).Convert3D(-5 * s, 0), DimStyleID);
+                    DimPloter.DimAli(db, Hat1.GetPoint3dAt(2), Hat1.GetPoint3dAt(3), Wall_left.GetPoint3dAt(4).Convert3D(-5 * s, 0), DimStyleID);
 
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(3), Wall_left.GetPoint3dAt(2), Wall_left.GetPoint3dAt(2).Convert3D(0, -5*s), DimStyleID);
                     TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_left.GetPoint2dAt(0).Convert2D(-10 * s, 8 * s), s);
@@ -610,7 +618,8 @@ namespace MyCAD1
                     
                     // 垫层
                     HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1), hatchref3, 0,100, 1, tmp_vet);
-                    HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1), hatchref2,100, LayerT, 1, tmp_vet);
+                    DianCengR=HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1), hatchref2,100, LayerT+ LayerAdd, 1, tmp_vet);                    
+
                     Verts = new Point2d[]
                     {
                         Wall_right.GetPoint2dAt(2),
@@ -669,9 +678,12 @@ namespace MyCAD1
                     H2.Layer = "细线";
                     HatchPloter.PlotH(db, H2, hatchref1, 1);
                     HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1), hatchref3, 0,100, 1, tmp_vet);
-                    HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1), hatchref3, 100, LayerT, 1, tmp_vet);
+                    DianCengR=HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1), hatchref2, 100, LayerT+ LayerAdd, 1, tmp_vet);
+                    
                     HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1).Convert2D(-200), Wall_left.GetPoint2dAt(0), hatchref3);
-                    HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1).Convert2D(-200), Wall_left.GetPoint2dAt(0), hatchref2,100,LayerT);
+                    DianCengL=HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1).Convert2D(-200), Wall_left.GetPoint2dAt(0), hatchref2,100, LayerT+LayerAdd);
+                    
+
                     TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_right.GetPoint2dAt(0).Convert2D(10 * s, 8 * s), s);
                     DimPloter.BiaoGao((Wall_right.GetPoint2dAt(5).Y - AnchorPoint.Y) / 1000 + H0, Wall_right.GetPoint2dAt(5).Convert3D(), modelSpace, tr, blockTbl, s);
                     DimPloter.Dim0(db, Wall_right.GetPoint3dAt(5), Wall_right.GetPoint3dAt(12), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
@@ -708,14 +720,15 @@ namespace MyCAD1
                     HatchPloter.PlotH(db, H1, hatchref1, 1);
 
                     HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1).Convert2D(200),  hatchref3);
-                    HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1).Convert2D(200), hatchref2,100,LayerT);
+                    DianCengR=HatchPloter.PlotLayerOne(db, Wall_right.GetPoint2dAt(0), Wall_right.GetPoint2dAt(1).Convert2D(200), hatchref2,100,LayerT+LayerAdd);
+                    
                     HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1), Wall_left.GetPoint2dAt(0), hatchref3,0, 100, 1, tmp_vet);
-                    HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1), Wall_left.GetPoint2dAt(0), hatchref2,  100, LayerT,1, tmp_vet);
+                    DianCengL=HatchPloter.PlotLayerOne(db, Wall_left.GetPoint2dAt(1), Wall_left.GetPoint2dAt(0), hatchref2,  100, LayerT+LayerAdd,1, tmp_vet);                    
 
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(6), Wall_left.GetPoint3dAt(5), Wall_left.GetPoint3dAt(4).Convert3D(-500, 0), DimStyleID);
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(5), Wall_left.GetPoint3dAt(4), Wall_left.GetPoint3dAt(4).Convert3D(-500, 0), DimStyleID);
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(4), Wall_left.GetPoint3dAt(3), Wall_left.GetPoint3dAt(4).Convert3D(-500, 0), DimStyleID);
-                    DimPloter.DimAli(db, H1.GetPoint3dAt(3), H1.GetPoint3dAt(2), Wall_left.GetPoint3dAt(4).Convert3D(-500, 0), DimStyleID);
+                    DimPloter.DimAli(db, H1.GetPoint3dAt(2), H1.GetPoint3dAt(3), Wall_left.GetPoint3dAt(4).Convert3D(-500, 0), DimStyleID);
                     DimPloter.DimAli(db, Wall_left.GetPoint3dAt(3), Wall_left.GetPoint3dAt(2), Wall_left.GetPoint3dAt(2).Convert3D(0, -500), DimStyleID);
                     TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_left.GetPoint2dAt(0).Convert2D(-10 * s, 8 * s), s);
                     DimPloter.BiaoGao((Wall_left.GetPoint2dAt(5).Y - AnchorPoint.Y) / 1000 + H0, Wall_left.GetPoint2dAt(5).Convert3D(), modelSpace, tr, blockTbl, s);
@@ -737,16 +750,7 @@ namespace MyCAD1
 
 
 
-
-
-
-                // 对齐标注
-
-
-
-
-
-
+                
             }
             else if ((int)DalotType <= 6)
             {
@@ -763,6 +767,25 @@ namespace MyCAD1
 
             }
 
+
+
+            // 底垫层修复
+            Polyline DianCengDiXian = new Polyline();
+            DianCengDiXian.AddVertexAt(0, DianCengL.GetPoint2dAt(0), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(1, DianCengL.GetPoint2dAt(3), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(2, DianCengL.GetPoint2dAt(2), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(3, hddc2.GetPoint2dAt(3), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(4, hddc2.GetPoint2dAt(2), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(5, DianCengR.GetPoint2dAt(3), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(6, DianCengR.GetPoint2dAt(2), 0, 0, 0);
+            DianCengDiXian.AddVertexAt(7, DianCengR.GetPoint2dAt(1), 0, 0, 0);
+            DianCengDiXian.Layer = "细线";
+            modelSpace.AppendEntity(DianCengDiXian);
+            tr.AddNewlyCreatedDBObject(DianCengDiXian, true);
+            DianCengL.Erase(true);
+            DianCengR.Erase(true);
+            hddc2.Erase(true);
+
             // 绘制帽子
 
             Polyline Road = (Polyline)csjx.Clone();                
@@ -772,7 +795,7 @@ namespace MyCAD1
             Road.Layer = "sjx";
             modelSpace.AppendEntity(Road);
             tr.AddNewlyCreatedDBObject(Road, true);
-
+            
             Polyline Land = (Polyline)cdmx.Clone();
             Land.TransformBy(Matrix3d.Scaling(1000, psjx));
             Land.TransformBy(Matrix3d.Displacement(psjx.GetVectorTo(AnchorPoint.Convert3D())));
@@ -789,6 +812,8 @@ namespace MyCAD1
 
             Point3d shoulder1 = Road.GetClosestPointTo(AnchorPoint.Convert3D(-W1, 0), Vector3d.YAxis, true);
             Point3d shoulder2 = Road.GetClosestPointTo(AnchorPoint.Convert3D(0, 0), Vector3d.YAxis, true);
+            int idx2 = Road.GetVertexIdx(shoulder2);
+
             Point3d shoulder3 = Road.GetClosestPointTo(AnchorPoint.Convert3D(W2, 0), Vector3d.YAxis.Negate(), true);
             Point3d DalotTop1 = LSets[LSets.Length - 1].GetClosestPointTo(shoulder1, true);
             Point3d DalotTop2 = LSets[LSets.Length - 1].GetClosestPointTo(shoulder2, true);
@@ -809,23 +834,77 @@ namespace MyCAD1
             DimPloter.Dim0(db, shoulder1, DalotTop1, shoulder1, DimStyleID,0.5*Math.PI);
             DimPloter.Dim0(db, shoulder2, DalotTop2, shoulder2, DimStyleID, 0.5 * Math.PI);
             DimPloter.Dim0(db, shoulder3, DalotTop3, shoulder3, DimStyleID, 0.5 * Math.PI);
+            // 路肩横坡
+            int idxL = idx2;
+            int idxR = idx2;
+            while (Road.GetPoint3dAt(idxL).DistanceTo(shoulder2) < 1)
+            {
+                idxL--;
+            }
+            while (Road.GetPoint3dAt(idxR).DistanceTo(shoulder2) < 1)
+            {
+                idxR++;
+            }
+            Point3d shoulder2L = Road.GetPoint3dAt(idxL);
+            Point3d shoulder2R = Road.GetPoint3dAt(idxR);
+            Point3d refL = new Point3d((shoulder2.X + shoulder2L.X) * 0.5, (shoulder2.Y + shoulder2L.Y) * 0.5+1*s, 0);
+            Point3d refR = new Point3d((shoulder2.X + shoulder2R.X) * 0.5, (shoulder2.Y + shoulder2R.Y) * 0.5+1*s, 0);
+            double hpL = (shoulder2L.Y - shoulder2.Y) / (shoulder2L.X - shoulder2.X)*100;
+            double hpR = (shoulder2R.Y - shoulder2.Y) / (shoulder2R.X - shoulder2.X)*100;
+            DimPloter.HengPo(db, hpL, refL, hpL>0, s);
+            DimPloter.HengPo(db, hpR, refR, hpR > 0, s);
 
+            // 帽子图剪切
+            Polyline forCut = new Polyline();
+            double tmpw = 0;
+            Point3d sL, sR;
+            if (Amont == AType.BZQ)
+            {
+                tmpw = DalotType <= DType.B ? 200 : 300;
+                sL = LSets[3].GetClosestPointTo(LSets[3].StartPoint.Convert3D(tmpw), Vector3d.YAxis, true);
+                sR = LSets[3].GetClosestPointTo(LSets[3].EndPoint.Convert3D(-tmpw), Vector3d.YAxis, true);
+            }
+            else
+            {
+                if (Slop < 0)
+                {
+                    sL = LSets[3].GetClosestPointTo(LSets[3].StartPoint.Convert3D(0), Vector3d.YAxis, true);
+                    sR = LSets[3].GetClosestPointTo(LSets[3].EndPoint.Convert3D(-tmpw), Vector3d.YAxis, true);
 
+                }
+                else
+                {
+                    sL = LSets[3].GetClosestPointTo(LSets[3].StartPoint.Convert3D(tmpw), Vector3d.YAxis, true);
+                    sR = LSets[3].GetClosestPointTo(LSets[3].EndPoint.Convert3D(-0), Vector3d.YAxis, true);
+                }
+            }
+            
 
+            forCut.AddVertexAt(0, sL.Convert2D(0, 1000000), 0, 0, 0);
+            forCut.AddVertexAt(1, sL.Convert2D(0, 0), 0, 0, 0);
+            forCut.AddVertexAt(2, sR.Convert2D(0, 0), 0, 0, 0);
+            forCut.AddVertexAt(3, sR.Convert2D(0, 1000000), 0, 0, 0);
 
-            //DimPloter.Dim0(db,  Wall_left.GetPoint3dAt(12),Road.GetPoint3dAt(1), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
-            //DimPloter.Dim0(db,  Road.GetPoint3dAt(1), Road.GetPoint3dAt(2), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
-            //DimPloter.Dim0(db, Road.GetPoint3dAt(2), Road.GetPoint3dAt(3), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
-            //DimPloter.Dim0(db, Road.GetPoint3dAt(3), Wall_right.GetPoint3dAt(12), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
-
-            //DimPloter.Dim0(db, Wall_right.GetPoint3dAt(12),Wall_right.GetPoint3dAt(5), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
-            //DimPloter.DimAng(db, Wall_left.GetLine(6), Wall_left.GetLine(11), Wall_left.GetPoint3dAt(7).Convert3D(0, -10*s),DimStyleID);
-            //DimPloter.DimAng(db, Wall_right.GetLine(6), Wall_right.GetLine(11), Wall_right.GetPoint3dAt(7).Convert3D(0, -10*s), DimStyleID);
-
+            pts.Clear();
+            Road.IntersectWith(forCut, Intersect.ExtendArgument, pts, IntPtr.Zero, IntPtr.Zero);
+            var newRoadCollection=Road.GetSplitCurves(pts);
+            Polyline newRoad = new Polyline();
+            if (newRoadCollection.Count>=2)
+            {
+                newRoad = (Polyline)newRoadCollection[1];
+            }
+            else
+            {
+                newRoad = Road;
+            }
+            newRoad.Layer = "sjx";
+            modelSpace.AppendEntity(newRoad);
+            tr.AddNewlyCreatedDBObject(newRoad, true);
+            Road.Erase(true);
 
             // 中心线
             pts.Clear();
-            Line CenterX = new Line(AnchorPoint.Convert3D(),shoulder2.Convert3D(0,11*s));
+            Line CenterX = new Line(AnchorPoint.Convert3D(0,-Sect[3]-100-LayerT-3*s),shoulder2.Convert3D(0,11*s));
             CenterX.Layer = "中心线";
             modelSpace.AppendEntity(CenterX);
             tr.AddNewlyCreatedDBObject(CenterX, true);
@@ -885,13 +964,17 @@ namespace MyCAD1
             // 填充
             Hatch hatchref1 = new Hatch();
             hatchref1.SetHatchPattern(HatchPatternType.PreDefined, "ANSI31");
+            hatchref1.PatternScale = 15;
             Hatch hatchref2 = new Hatch();
             hatchref2.SetHatchPattern(HatchPatternType.PreDefined, "AR-SAND");
+            hatchref2.PatternScale = 3;
             Hatch hatchref3 = new Hatch();
             hatchref3.SetHatchPattern(HatchPatternType.PreDefined, "AR-CONC");
+            hatchref3.PatternScale = 1;
             Hatch hatch1, hatch2, hatch3, hatch4;
             Polyline PL4 = new Polyline();
             double[] AreaS = new double[6];
+            double tiantu = 0;
 
             if ((int)DalotType <= 4)
             {
@@ -909,7 +992,7 @@ namespace MyCAD1
                 AreaS[3] = (PL1.GetLineSegmentAt(1).Length + PL1.GetLineSegmentAt(2).Length + PL1.GetLineSegmentAt(3).Length + PL1.GetLineSegmentAt(4).Length) / 1000;
                 AreaS[4] = (PL1.GetLineSegmentAt(5).Length + PL1.GetLineSegmentAt(6).Length) / 1000;
                 Polyline PL2 = PolylinePloter.Plot8(db, BB.Convert2D(0, Sect[3]),
-                    Sect[2] - Sect[3] - Sect[4], Sect[0] - 2 * Sect[5]);
+                    Sect[2] - Sect[3] - Sect[4], Sect[0] - 2 * Sect[5],Sect[6],Sect[7],Sect[8],Sect[9]);
                 PL2.Layer = "粗线";
                 Polyline PL3 = PolylinePloter.Plot4(db, BB.Convert2D(0, -100), 100, Sect[0]+FooterW*2 + 2 * 200);   // 外框
                 PL3.Layer = "细线";
@@ -964,8 +1047,8 @@ namespace MyCAD1
                 };
                 Polyline Hat2 = PolylinePloter.PlotN(db, pts, true);
                 Hat2.Layer = "细线";
-                HatchPloter.PlotH(db, Hat2, hatchref2, 0.2);
-                double tiantu = ((H2 - H0) * 1000 - Sect[2]) >= 1000 ? 1000 : ((H2 - H0) * 1000 - Sect[2]);
+                
+                tiantu = ((H2 - H0) * 1000 - Sect[2]) >= 1000 ? 1000 : ((H2 - H0) * 1000 - Sect[2]);
                 pts = new Point2d[]
                 {
                     Hat1.GetPoint2dAt(1),
@@ -1030,11 +1113,11 @@ namespace MyCAD1
                 temp.Rotation=-0.25 * Math.PI;
                 DBText temp2 = TextPloter.PrintText(db, "1/1", 2.5, Hat2.GetPoint2dAt(1).Convert2D(-8 * s, -8 * s), s);
                 temp2.Rotation = 0.25 * Math.PI;
-                TextPloter.PrintText(db, "REMBLAI.G.L", 3, Hat1.GetPoint2dAt(2).Convert2D(-10*s ,-10*s), s);
+                TextPloter.PrintText(db, "REMBLAI.G.L", 2.5, Hat1.GetPoint2dAt(2).Convert2D(-10*s ,-10*s), s);
                 //-------------------------------------------------------------------------------------------
 
 
-
+                HatchPloter.PlotH(db, Hat2, hatchref2, 0.2);
 
 
             }
@@ -1064,7 +1147,7 @@ namespace MyCAD1
             }
       
                    
-            TextPloter.PrintTitle(db, "COUPE B-B", AnchorPoint.Convert2D(0, Sect[2]+21.5*s), s);
+            TextPloter.PrintTitle(db, "COUPE B-B", AnchorPoint.Convert2D(0, Sect[2]+15*s), s);
 
 
             tr.Commit();
@@ -1151,14 +1234,14 @@ namespace MyCAD1
                 }
                 else
                 {
-                    res[0] = 2000;
-                    for (int i = 1; i <= numThree; i++)
+                    res[0] = 0;
+                    for (int i = 0; i <= numThree; i++)
                     {
-                        res[i] = i * 3000+2000;
+                        res[i+1] = i * 3000+2000;
                     }
-                    for (int i = 1; i < numTwo; i++)
+                    for (int i =1; i+ numThree < numThree+numTwo; i++)
                     {
-                        res[i] = numThree * 3000 + 2000+i*2000;
+                        res[numThree+ 1 + i] = numThree * 3000 + 2000+i*2000;
                     }
                 }
             }

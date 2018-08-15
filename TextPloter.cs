@@ -12,11 +12,114 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.Data;
+using MOExcel = Microsoft.Office.Interop.Excel;
 
 namespace MyCAD1
 {
     class TextPloter
     {
+
+
+        public static void PrintNumTitle(Database db, Point3d PaperOrigenPoint,Dalot curDalot)
+        {
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord recorder = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                for (int i=0; i <= 1; i++)
+                {
+                    DBText num = new DBText();
+                    num.TextString = "1";
+                    num.Height = 2.5;
+                    if (i == 0)
+                    {
+                        num.Position = PaperOrigenPoint.Convert3D(394.817, 283.25);
+                    }
+                    else
+                    {
+                        num.Position = PaperOrigenPoint.Convert3D(404.939, 283.25);
+                    }                    
+                    num.HorizontalMode = TextHorizontalMode.TextCenter;
+                    num.VerticalMode = TextVerticalMode.TextVerticalMid;
+                    num.AlignmentPoint = num.Position;
+                    num.Layer = "标注";
+                    num.TextStyleId = st["En"];
+                    num.WidthFactor = 0.85;
+                    recorder.AppendEntity(num);
+                    tr.AddNewlyCreatedDBObject(num, true);
+                }
+
+                // 标题
+                DBText title = new DBText();
+                if (curDalot.DalotType == DType.A)
+                {
+                    title.TextString = "PLAN DE COFFRAGE DU DALOT (1-1.5×1.0m)";
+                }
+                else if (curDalot.DalotType == DType.B)
+                {
+                    title.TextString = "PLAN DE COFFRAGE DU DALOT (1-2.0×1.5m)";
+                }
+                else if(curDalot.DalotType == DType.C)
+                {
+                    title.TextString = "PLAN DE COFFRAGE DU DALOT (1-4.0×2.0m)";
+                }
+                else if(curDalot.DalotType == DType.D)
+                {
+                    title.TextString = "PLAN DE COFFRAGE DU DALOT (1-4.0×3.0m)";
+                }
+                else
+                {
+                    return;
+                }
+                title.Height = 3.5;
+                title.Position = PaperOrigenPoint.Convert3D(254.5391, 21.4013);                
+                title.HorizontalMode = TextHorizontalMode.TextCenter;
+                title.VerticalMode = TextVerticalMode.TextVerticalMid;
+                title.AlignmentPoint = title.Position;
+                title.Layer = "标注";
+                title.TextStyleId = st["En"];
+                title.WidthFactor = 0.8;
+                recorder.AppendEntity(title);
+                tr.AddNewlyCreatedDBObject(title, true);
+
+                title = new DBText();
+                title.TextString =curDalot.Pk_string();
+                title.Height = 3.5;
+                title.Position = PaperOrigenPoint.Convert3D(254.5391,15.2987);
+                title.HorizontalMode = TextHorizontalMode.TextCenter;
+                title.VerticalMode = TextVerticalMode.TextVerticalMid;
+                title.AlignmentPoint = title.Position;
+                title.Layer = "标注";
+                title.TextStyleId = st["En"];
+                title.WidthFactor = 0.8;
+                recorder.AppendEntity(title);
+                tr.AddNewlyCreatedDBObject(title, true);
+
+                //  图号
+                DBText dn = new DBText();
+                dn.TextString = curDalot.DesignNo;
+                dn.Height = 2.5;
+                dn.Position = PaperOrigenPoint.Convert3D(371,14);
+                dn.HorizontalMode = TextHorizontalMode.TextCenter;
+                dn.VerticalMode = TextVerticalMode.TextVerticalMid;
+                dn.AlignmentPoint = dn.Position;
+                dn.Layer = "标注";
+                dn.TextStyleId = st["En"];
+                dn.WidthFactor = 0.8;
+                recorder.AppendEntity(dn);
+                tr.AddNewlyCreatedDBObject(dn, true);
+
+
+
+
+
+                tr.Commit();
+            }
+            return;
+        }
 
 
         public static void PrintNote(Database db, ObjectId recderID, Point3d InsertPoint)
@@ -40,15 +143,18 @@ namespace MyCAD1
             return;
         }
 
-        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj,DMT curDMT,System.Data.DataTable curParas,double [] AreaOfSection)
+        public static void PrintTable(Database db,  Point3d PaperOrigenPoint,Dalot curDatlotObj,DMT curDMT,System.Data.DataTable curParas,double [] AreaOfSection,
+            MOExcel.Worksheet worksheet,int LineIdx)
         {
-            double x0 = 276;
-            double x1 = 378 + 4;
-            double y0 = 276;
-            double t1 = 300;
-            double t2 = 338;
-            double t3 = 355;
-            double t4 = t3 + 12 + 4;
+            double x0 = 284;
+            double y_anchor = 267;
+
+            double y0=0;
+            double x1 = x0+106;
+            double t1 = x0+24;
+            double t2 = t1+38;
+            double t3 = t2+17;
+            double t4 = t3 +16;
 
             
             int[] num23 = curDatlotObj.GetSegNum();
@@ -62,11 +168,11 @@ namespace MyCAD1
                 TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
                 BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                 BlockTableRecord recorder = tr.GetObject(blockTbl[BlockTableRecord.PaperSpace], OpenMode.ForWrite) as BlockTableRecord;
-                DBText theTitle = new DBText();
 
+                DBText theTitle = new DBText();
                 theTitle.TextString = "TABLEAU QUANTITATIF DES DALOT "+curDatlotObj.Pk_string();
                 theTitle.Height = 3.5;
-                theTitle.Position = PaperOrigenPoint.Convert3D((x0+x1)*0.5,276);
+                theTitle.Position = PaperOrigenPoint.Convert3D((x0+x1)*0.5, y_anchor);
                 theTitle.HorizontalMode =TextHorizontalMode.TextCenter;
                 theTitle.VerticalMode = TextVerticalMode.TextBottom;                
                 theTitle.AlignmentPoint = theTitle.Position;
@@ -75,6 +181,19 @@ namespace MyCAD1
                 theTitle.WidthFactor = 0.85;
                 recorder.AppendEntity(theTitle);
                 tr.AddNewlyCreatedDBObject(theTitle, true);
+
+                DBText theTitleZh = new DBText();
+                theTitleZh.TextString = "涵洞材料数量表";
+                theTitleZh.Height = 5;
+                theTitleZh.Position = PaperOrigenPoint.Convert3D((x0 + x1) * 0.5, y_anchor+6);
+                theTitleZh.HorizontalMode = TextHorizontalMode.TextCenter;
+                theTitleZh.VerticalMode = TextVerticalMode.TextBottom;
+                theTitleZh.AlignmentPoint = theTitleZh.Position;
+                theTitleZh.Layer = "标注";
+                theTitleZh.TextStyleId = st["fsdb"];
+                theTitleZh.WidthFactor = 0.85;
+                recorder.AppendEntity(theTitleZh);
+                tr.AddNewlyCreatedDBObject(theTitleZh, true);
 
                 Dictionary<int,string[]> table = new Dictionary<int, string[]>();
 
@@ -160,9 +279,9 @@ namespace MyCAD1
                 table.Add(7, new string[] { "Armature", "FeE400", "kg", string.Format("{0:F1}", ASteel) });
                 table.Add(8, new string[] { "Béton", "C12/15", "m3", C15});
                 table.Add(9, new string[] { "Graveleux latérique", "-", "m3", Gra });
-                table.Add(10, new string[] { "Badigeonnage des parements", "-", "m3", Bad });
-                table.Add(11, new string[] { "Motier hydro", "-", "m3", Mot });
-                table.Add(12, new string[] { "Joint", "-", "m3", Joint });
+                table.Add(10, new string[] { "Badigeonnage des parements", "-", "m2", Bad });
+                table.Add(11, new string[] { "Motier hydro", "-", "m2", Mot });
+                table.Add(12, new string[] { "Joint", "-", "m2", Joint });
                 table.Add(13, new string[] { "Déblai", "-", "m3", Deb });
                 table.Add(14, new string[] { "Remblaiement au dos de dalot", "-", "m3", Rem });
                 table.Add(15, new string[] { "Enrochement", "-", "m3", Enr });
@@ -175,11 +294,62 @@ namespace MyCAD1
                 columnName.Add(11, "Etanchéité");
                 columnName.Add(14, "Terrassement");
 
+                // 输出表格数据
+                worksheet.Cells[LineIdx, 1] = " ";
+                worksheet.Cells[LineIdx, 2] =curDatlotObj.Pk_string();
+                worksheet.Cells[LineIdx, 3] ="dalot";
+                if (curDatlotObj.DalotType == DType.A)
+                {
+                    worksheet.Cells[LineIdx, 4] = "1-1.5*1.0";
+                }
+                else if (curDatlotObj.DalotType == DType.B)
+                {
+                    worksheet.Cells[LineIdx, 4] = "1-2.0*1.5";
+                }
+                else if (curDatlotObj.DalotType == DType.C)
+                {
+                    worksheet.Cells[LineIdx, 4] = "1-4.0*2.0";
+                }
+                else if (curDatlotObj.DalotType == DType.D)
+                {
+                    worksheet.Cells[LineIdx, 4] = "1-4.0*3.0";
+                }
+                worksheet.Cells[LineIdx, 5] = 90-curDatlotObj.Ang;
+                worksheet.Cells[LineIdx, 6] = curDatlotObj.Length/1000;
+                if (curDatlotObj.Amont == AType.BZQ)
+                {
+                    worksheet.Cells[LineIdx, 7] = "Mur en aile";
+                }
+                else
+                {
+                    worksheet.Cells[LineIdx, 7] = "Puit d'eau";
+                }
+                worksheet.Cells[LineIdx, 8] = "Mur en aile";
+                worksheet.Cells[LineIdx, 9] = string.Format("{0:F1}", Conc);
+                worksheet.Cells[LineIdx, 10] = string.Format("{0:F1}", Steel);
+                worksheet.Cells[LineIdx, 11] = string.Format("{0:G}", totalSegNum);
+                worksheet.Cells[LineIdx, 12] = JSJConc;
+                worksheet.Cells[LineIdx, 13] = BZQConc;
+                worksheet.Cells[LineIdx, 14] = "-";
+                worksheet.Cells[LineIdx, 15] = string.Format("{0:F1}", ASteel);
+                worksheet.Cells[LineIdx, 16] = C15;
+                worksheet.Cells[LineIdx, 17] = Gra;
+                worksheet.Cells[LineIdx, 18] = Bad;
+                worksheet.Cells[LineIdx, 19] = Mot;
+                worksheet.Cells[LineIdx, 20] = Joint;
+                worksheet.Cells[LineIdx, 21] = Deb;
+                worksheet.Cells[LineIdx, 22] = Rem;
+                worksheet.Cells[LineIdx, 23] = Enr;
+                worksheet.Cells[LineIdx, 24] = " ";
+
+
+
+
 
 
                 for (int i = 0; i < 16; i++)
                 {
-                    y0 = 276 - i * 6;
+                    y0 = y_anchor - i * 6;
 
                     if (new List<int> { 1, 4, 8, 10, 13 }.Contains(i))
                     {
@@ -205,15 +375,19 @@ namespace MyCAD1
                         txt.Height = 2.5;
                         if (i == 5 || i == 8)
                         {
-                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0-3-3);
+                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0);
+                            txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                            txt.VerticalMode = TextVerticalMode.TextVerticalMid;
+                            txt.AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0 - 6);
                         }
                         else
                         {
-                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0 - 3);
+                            txt.Position = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0);
+                            txt.HorizontalMode = TextHorizontalMode.TextCenter;
+                            txt.VerticalMode = TextVerticalMode.TextVerticalMid;
+                            txt.AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0 - 3);
                         }
-                        txt.HorizontalMode = TextHorizontalMode.TextCenter;
-                        txt.VerticalMode = TextVerticalMode.TextVerticalMid;
-                        txt.AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t1) * 0.5, y0 - 3);
+
                         txt.Layer = "标注";
                         txt.WidthFactor = 0.85;
                         recorder.AppendEntity(txt);
@@ -266,11 +440,11 @@ namespace MyCAD1
                     Line ShuXin = new Line();
                     if (x_shuxian == t1)
                     {
-                        ShuXin = new Line(PaperOrigenPoint.Convert3D(x_shuxian, 270), PaperOrigenPoint.Convert3D(x_shuxian, 180));
+                        ShuXin = new Line(PaperOrigenPoint.Convert3D(x_shuxian, y_anchor-6), PaperOrigenPoint.Convert3D(x_shuxian, y_anchor-96));
                     }
                     else
                     {
-                        ShuXin = new Line(PaperOrigenPoint.Convert3D(x_shuxian, 276), PaperOrigenPoint.Convert3D(x_shuxian, 180));
+                        ShuXin = new Line(PaperOrigenPoint.Convert3D(x_shuxian, y_anchor), PaperOrigenPoint.Convert3D(x_shuxian, y_anchor-96));
                     }
                     ShuXin.Layer = "标注";
                     recorder.AppendEntity(ShuXin);
@@ -284,10 +458,10 @@ namespace MyCAD1
                     TextString = "Aspect d'ouvrage",
                     TextStyleId = st["En"],
                     Height = 2.5,
-                    Position = PaperOrigenPoint.Convert3D((x0 + t2) * 0.5, 276 - 3),
+                    Position = PaperOrigenPoint.Convert3D((x0 + t2) * 0.5, y_anchor - 3),
                     HorizontalMode = TextHorizontalMode.TextCenter,
                     VerticalMode = TextVerticalMode.TextVerticalMid,
-                    AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t2) * 0.5, 276 - 3),
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((x0 + t2) * 0.5, y_anchor - 3),
                     Layer = "标注",
                     WidthFactor = 0.85,
                 };
@@ -298,10 +472,10 @@ namespace MyCAD1
                     TextString = "Matériaux",
                     TextStyleId = st["En"],
                     Height = 2.5,
-                    Position = PaperOrigenPoint.Convert3D((t2 + t3) * 0.5, 276 - 3),
+                    Position = PaperOrigenPoint.Convert3D((t2 + t3) * 0.5, y_anchor - 3),
                     HorizontalMode = TextHorizontalMode.TextCenter,
                     VerticalMode = TextVerticalMode.TextVerticalMid,
-                    AlignmentPoint = PaperOrigenPoint.Convert3D((t3 + t2) * 0.5, 276 - 3),
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((t3 + t2) * 0.5, y_anchor - 3),
                     Layer = "标注",
                     WidthFactor = 0.85,
                 };
@@ -312,10 +486,10 @@ namespace MyCAD1
                     TextString = "Unité",
                     TextStyleId = st["En"],
                     Height = 2.5,
-                    Position = PaperOrigenPoint.Convert3D((t4 + t3) * 0.5, 276 - 3),
+                    Position = PaperOrigenPoint.Convert3D((t4 + t3) * 0.5, y_anchor - 3),
                     HorizontalMode = TextHorizontalMode.TextCenter,
                     VerticalMode = TextVerticalMode.TextVerticalMid,
-                    AlignmentPoint = PaperOrigenPoint.Convert3D((t3 + t4) * 0.5, 276 - 3),
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((t3 + t4) * 0.5, y_anchor - 3),
                     Layer = "标注",
                     WidthFactor = 0.85,
                 };
@@ -326,10 +500,10 @@ namespace MyCAD1
                     TextString = "Quantité",
                     TextStyleId = st["En"],
                     Height = 2.5,
-                    Position = PaperOrigenPoint.Convert3D((x1 + t4) * 0.5, 276 - 3),
+                    Position = PaperOrigenPoint.Convert3D((x1 + t4) * 0.5, y_anchor - 3),
                     HorizontalMode = TextHorizontalMode.TextCenter,
                     VerticalMode = TextVerticalMode.TextVerticalMid,
-                    AlignmentPoint = PaperOrigenPoint.Convert3D((x1 + t4) * 0.5, 276 - 3),
+                    AlignmentPoint = PaperOrigenPoint.Convert3D((x1 + t4) * 0.5, y_anchor - 3),
                     Layer = "标注",
                     WidthFactor = 0.85,
                 };
@@ -485,7 +659,7 @@ namespace MyCAD1
 
 
                 txt.TextString = textstring.ToString();
-                txt.Height = 2 * scale;
+                txt.Height = 2.5 * scale;
                 txt.Position = PositionPoint.Convert3D();
                 txt.HorizontalMode = TextHorizontalMode.TextCenter;
                 txt.VerticalMode = TextVerticalMode.TextVerticalMid;
@@ -494,8 +668,8 @@ namespace MyCAD1
                 txt.Layer = "标注";
                 txt.WidthFactor = 0.75;
 
-                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.3 * scale);
-                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.6 * scale);
+                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.5 * scale);
+                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.8 * scale);
                 C1.Layer = "标注";
                 C2.Layer = "标注";
                 modelSpace.AppendEntity(txt);
@@ -524,7 +698,7 @@ namespace MyCAD1
 
 
                 txt.TextString = textstring.ToString();
-                txt.Height = 2 * scale;
+                txt.Height = 2.5 * scale;
                 txt.Position = PositionPoint.Convert3D();
                 txt.HorizontalMode = TextHorizontalMode.TextCenter;
                 txt.VerticalMode = TextVerticalMode.TextVerticalMid;
@@ -533,13 +707,13 @@ namespace MyCAD1
                 txt.Layer = "标注";
                 txt.WidthFactor = 0.75;
 
-                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.3 * scale);
-                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.6 * scale);
+                C1 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.5 * scale);
+                C2 = new Circle(PositionPoint.Convert3D(), Vector3d.ZAxis, 1.8 * scale);
                 C1.Layer = "标注";
                 C2.Layer = "标注";
 
-                L1 = new Line(PositionPoint.Convert3D(0, 1.6 * scale), endP.Convert3D());
-                L2 = new Line(PositionPoint.Convert3D(0, -1.6 * scale), startP.Convert3D());
+                L1 = new Line(PositionPoint.Convert3D(0, 1.8 * scale), endP.Convert3D());
+                L2 = new Line(PositionPoint.Convert3D(0, -1.8 * scale), startP.Convert3D());
                 L1.Layer = "标注";
                 L2.Layer = "标注";
 

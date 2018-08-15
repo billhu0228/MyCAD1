@@ -88,15 +88,15 @@ namespace MyCAD1
         /// 获得Line中点Point3D.
         /// </summary>
         /// <param name="aline">目标线.</param>       
-        
-        public static Point3d GetMidPoint3d(this Line aline,double xx=0,double yy=0)
+
+        public static Point3d GetMidPoint3d(this Line aline, double xx = 0, double yy = 0)
         {
             double x = 0.5 * (aline.StartPoint.X + aline.EndPoint.X);
             double y = 0.5 * (aline.StartPoint.Y + aline.EndPoint.Y);
-            return new Point3d(x+xx, y+yy, 0);
+            return new Point3d(x + xx, y + yy, 0);
         }
 
-        public static Point2d GetXPoint2d(this Line aline,double part=0.5, double xx = 0, double yy = 0)
+        public static Point2d GetXPoint2d(this Line aline, double part = 0.5, double xx = 0, double yy = 0)
         {
             double x = aline.StartPoint.X + part * (aline.EndPoint.X - aline.StartPoint.X);
             double y = aline.StartPoint.Y + part * (aline.EndPoint.Y - aline.StartPoint.Y);
@@ -113,7 +113,7 @@ namespace MyCAD1
         {
             double x = 0.5 * (aline.StartPoint.X + aline.EndPoint.X);
             double y = 0.5 * (aline.StartPoint.Y + aline.EndPoint.Y);
-            return new Point2d(x+xx, y+yy);
+            return new Point2d(x + xx, y + yy);
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace MyCAD1
         /// <param name="minPoint">左下角点</param>
         /// <param name="maxPoint">右上角点</param>
         /// <returns>新线段</returns>
-        public static Line CutByRect(this Line aline,Point2d minPoint,Point2d maxPoint,bool isInf=true)
+        public static Line CutByRect(this Line aline, Point2d minPoint, Point2d maxPoint, bool isInf = true)
         {
             Line res = aline;
             Polyline BD = new Polyline();
@@ -139,7 +139,7 @@ namespace MyCAD1
 
             if (aline.StartPoint.X == aline.EndPoint.X)
             {
-                if(aline.StartPoint.X==minPoint.X )
+                if (aline.StartPoint.X == minPoint.X)
                 {
                     res.StartPoint = minPoint.Convert3D();
                     res.EndPoint = minPoint.Convert3D(0, dy);
@@ -190,7 +190,7 @@ namespace MyCAD1
 
         public static Line CutByDoubleLine(this Line aline, Point2d minPoint, Point2d maxPoint, bool isInf = true)
         {
-            Line res = (Line)aline.Clone() ;
+            Line res = (Line)aline.Clone();
             Line A = new Line(minPoint.Convert3D(), minPoint.Convert3D(1));
             Line B = new Line(maxPoint.Convert3D(), maxPoint.Convert3D(1));
             Point3dCollection pts = new Point3dCollection();
@@ -202,7 +202,7 @@ namespace MyCAD1
             pts.Clear();
             aline.IntersectWith(B, Intersect.ExtendBoth, pts, IntPtr.Zero, IntPtr.Zero);
             res.EndPoint = pts[0];
-            
+
             return res;
         }
 
@@ -214,16 +214,16 @@ namespace MyCAD1
 
 
 
-            /// <summary>
-            /// Apply plot settings to the provided layout.
-            /// </summary>
-            /// <param name="pageSize">The canonical media name for our page size.</param>
-            /// <param name="styleSheet">The pen settings file (ctb or stb).</param>
-            /// <param name="devices">The name of the output device.</param>
+        /// <summary>
+        /// Apply plot settings to the provided layout.
+        /// </summary>
+        /// <param name="pageSize">The canonical media name for our page size.</param>
+        /// <param name="styleSheet">The pen settings file (ctb or stb).</param>
+        /// <param name="devices">The name of the output device.</param>
 
 
 
-            public static void SetPlotSettings(this Layout lay, string pageSize, string styleSheet, string device)
+        public static void SetPlotSettings(this Layout lay, string pageSize, string styleSheet, string device)
         {
             using (var ps = new PlotSettings(lay.ModelType))
             {
@@ -310,9 +310,9 @@ namespace MyCAD1
         /// </summary>
         /// <param name="thePline">多线名称。</param>       
         /// <param name="width">全局宽度。</param>       
-        public static void GlobalWidth(this Polyline thePline, double width=0)
+        public static void GlobalWidth(this Polyline thePline, double width = 0)
         {
-            for(int i=0; i<thePline.NumberOfVertices; i++)
+            for (int i = 0; i < thePline.NumberOfVertices; i++)
             {
                 thePline.SetStartWidthAt(i, width);
                 thePline.SetEndWidthAt(i, width);
@@ -334,6 +334,28 @@ namespace MyCAD1
         }
 
 
+        public static int GetVertexIdx(this Polyline thePL, Point3d pt)
+        {
+            int i = 0;
+            while (true)
+            {
+                Point3d vetx=thePL.GetPoint3dAt(i);
+                if (vetx == null)
+                {
+                    return -1;                    
+                }
+                else if (vetx.DistanceTo(pt) <1)
+                {                    
+                    return i;
+                }
+                i++;
+            }            
+        }
+
+
+
+
+
         /// <summary>
         /// 根据多线线段编号获取对应直线
         /// </summary>
@@ -345,7 +367,16 @@ namespace MyCAD1
             var seg = thePline.GetLineSegmentAt(SegID);
             Point3d p1 = seg.StartPoint;
             Point3d p2 = seg.EndPoint;
-            Line res = new Line(p1, p2);            
+            Line res;
+            if (p1.X < p2.X)
+            {
+                res = new Line(p1, p2);
+            }
+            else
+            {
+                res = new Line(p2, p1);
+            }
+            
             return res;
         }
 
