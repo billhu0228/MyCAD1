@@ -164,7 +164,7 @@ namespace MyCAD1
                 double dBC = 0.5 * TheDalot.Sect[0]+ TheDalot.FooterW+tmpwidth+ TheDalot.Sect[2] + 1100+5*scaleB;
                 double offC = scaleB * 240 * 0.5-73*scaleB;// - dBC;
 
-                Point2d centerPointC = TheDalot.BasePoint.Convert2D(800* scaleA - offC, dAB-22.5*scaleB+TheDalot.Sect[2]+25*scaleB);
+                Point2d centerPointC = TheDalot.BasePoint.Convert2D(800* scaleA - offC, dAB-22.5*scaleB+TheDalot.Sect[2]+30*scaleB);
 
 
 

@@ -1052,8 +1052,8 @@ namespace MyCAD1
                 pts = new Point2d[]
                 {
                     Hat1.GetPoint2dAt(1),
-                    Hat1.GetPoint2dAt(1).Convert2D(-tiantu,tiantu),
-                    Hat2.GetPoint2dAt(1).Convert2D(tiantu,tiantu),
+                    Hat1.GetPoint2dAt(1).Convert2D(-1000,1000),
+                    Hat2.GetPoint2dAt(1).Convert2D(1000,1000),
                     Hat2.GetPoint2dAt(1),
                 };
                 Polyline PL5 = PolylinePloter.PlotN(db, pts, false);
@@ -1147,7 +1147,7 @@ namespace MyCAD1
             }
       
                    
-            TextPloter.PrintTitle(db, "COUPE B-B", AnchorPoint.Convert2D(0, Sect[2]+15*s), s);
+            TextPloter.PrintTitle(db, "COUPE B-B", AnchorPoint.Convert2D(0, Sect[2]+1000+8*s), s);
 
 
             tr.Commit();
@@ -1306,7 +1306,7 @@ namespace MyCAD1
             string res;
             int kilo=(int)Pk / 1000;
             double meter = Pk % 1000;
-            res = string.Format("PK{0}+{1:0.000}", kilo, meter);
+            res = string.Format("PK{0}+{1:000.000}", kilo, meter);
 
             return res;
         }

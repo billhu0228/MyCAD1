@@ -204,7 +204,7 @@ namespace MyCAD1
                 double SectA = 0;
                 if (curDatlotObj.DalotType == DType.A)
                 {
-                    Conc=2*.0*num23[0]*1.18915+3.0*num23[1]*1.18915;
+                    Conc=2.0*num23[0]*1.18915+3.0*num23[1]*1.18915;
                     Steel = num23[0] *(double)theData["2m钢筋量"] + num23[1] * (double)theData["3m钢筋量"];
                     totalSegNum = num23[0] + num23[1];
                     bzqL = 2.000;
