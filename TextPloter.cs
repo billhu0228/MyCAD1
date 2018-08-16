@@ -202,6 +202,11 @@ namespace MyCAD1
                 int totalSegNum = 0;
                 double bzqL=0, jsjL=0;
                 double SectA = 0;
+                double YiGeXiaoSanJiao = 0;
+                double BZQfangshuiceng = 0;
+                double JSJfangshuiceng = 0;
+
+
                 if (curDatlotObj.DalotType == DType.A)
                 {
                     Conc=2.0*num23[0]*1.18915+3.0*num23[1]*1.18915;
@@ -210,6 +215,9 @@ namespace MyCAD1
                     bzqL = 2.000;
                     jsjL = 1.850;
                     SectA = 1.18915;
+                    YiGeXiaoSanJiao = 2 * 2 * Math.Tan(30.0 / 180.0 * Math.PI)*0.5;
+                    BZQfangshuiceng = 3.8;
+                    JSJfangshuiceng = 7.84;
                 }
                 else if (curDatlotObj.DalotType == DType.B)
                 {
@@ -219,6 +227,9 @@ namespace MyCAD1
                     bzqL = 2.825;
                     jsjL = 1.900;
                     SectA = 2.035;
+                    YiGeXiaoSanJiao = 2.82 * 2.82 * Math.Tan(30.0 / 180.0 * Math.PI) * 0.5;
+                    BZQfangshuiceng = 7;
+                    JSJfangshuiceng = 12.4;
                 }
                 else if(curDatlotObj.DalotType==DType.C)
                 {
@@ -228,6 +239,8 @@ namespace MyCAD1
                     bzqL = 3.6;
                     jsjL = 0;
                     SectA = 5.5379;
+                    YiGeXiaoSanJiao = 3.6 * 3.6 * Math.Tan(30.0 / 180.0 * Math.PI) * 0.5;
+                    BZQfangshuiceng = 14.965;
                 }
                 else if (curDatlotObj.DalotType == DType.D)
                 {
@@ -237,17 +250,25 @@ namespace MyCAD1
                     bzqL = 5.1;
                     jsjL = 0;
                     SectA = 6.24965;
+                    YiGeXiaoSanJiao = 5.1 * 5.1 * Math.Tan(30.0 / 180.0 * Math.PI) * 0.5;
+                    BZQfangshuiceng = 27.089;
                 }
 
                 string JSJConc,BZQConc;
                 double ASteel = 0;
                 double totalLength;
+                string C15 = "";
+                string Gra = "";
+                string Bad = "";
                 if (curDatlotObj.Amont == AType.BZQ)
                 {
                     JSJConc = "-";
                     BZQConc = string.Format("{0:F1}", (double)theData["八字墙混凝土"] * 2.0);
                     ASteel = (double)theData["八字墙钢筋"] * 2;
                     totalLength = curDatlotObj.Length / 1000 + 2 * bzqL;
+                    C15 = string.Format("{0:F1}", (AreaOfSection[1] * totalLength + YiGeXiaoSanJiao * 4 * 0.1) * 1.05);
+                    Gra = AreaOfSection[2] == 0 ? "-" : string.Format("{0:F1}", (AreaOfSection[2] * (totalLength - curDatlotObj.MouthT / 1000 * 2)+YiGeXiaoSanJiao*4*curDatlotObj.LayerT/1000) * 1.05);
+                    Bad = string.Format("{0:F1}", (AreaOfSection[3] * 2 + AreaOfSection[4]) * curDatlotObj.Length / 1000+BZQfangshuiceng*2.0);
                 }
                 else
                 {
@@ -255,16 +276,19 @@ namespace MyCAD1
                     BZQConc = string.Format("{0:F1}", (double)theData["八字墙混凝土"] * 1.0);
                     ASteel = (double)theData["八字墙钢筋"] + (double)theData["集水井钢筋"];
                     totalLength = curDatlotObj.Length / 1000 +  bzqL+jsjL;
+                    C15 = string.Format("{0:F1}", (AreaOfSection[1] * totalLength + YiGeXiaoSanJiao * 2* 0.1) * 1.05);
+                    Gra = AreaOfSection[2] == 0 ? "-" : string.Format("{0:F1}", (AreaOfSection[2] * (totalLength - curDatlotObj.MouthT / 1000 * 2) + YiGeXiaoSanJiao * 2 * curDatlotObj.LayerT / 1000) * 1.05);
+                    Bad = string.Format("{0:F1}", (AreaOfSection[3] * 2 + AreaOfSection[4]) * curDatlotObj.Length / 1000 + BZQfangshuiceng * 2.0+BZQfangshuiceng+JSJfangshuiceng);
                 }
-                string C15 = string.Format("{0:F1}", AreaOfSection[1] * totalLength * 1.05);
-                string Gra=AreaOfSection[2]==0?"-" : string.Format("{0:F1}", AreaOfSection[2] * (totalLength-curDatlotObj.MouthT/1000*2) * 1.05);
+                
+                
                 string Mot = "-";
-                string Bad = string.Format("{0:F1}", (AreaOfSection[3]*2+ AreaOfSection[4]) * curDatlotObj.Length / 1000); ;
-                if (curDatlotObj.H2 - curDatlotObj.H0 - curDatlotObj.Sect[2] / 1000 <= 0.5)
+                
+                if (curDatlotObj.H2 - curDatlotObj.H0 - (curDatlotObj.Sect[2]-curDatlotObj.Sect[3])/ 1000 <= 0.5)
                 {
                     Mot = string.Format("{0:F1}", AreaOfSection[4] * curDatlotObj.Length / 1000);
                 }
-                string Joint = string.Format("{0:F1}", SectA * (totalSegNum+1));
+                string Joint = string.Format("{0:F1}", (SectA+ AreaOfSection[1]) * (totalSegNum+1));
 
                 string Rem = string.Format("{0:F1}", AreaOfSection[0] * totalLength);
                 string Enr=string.Format("{0:F1}",(bzqL / Math.Sqrt(3) * 2 + curDatlotObj.Sect[0]/1000)*0.625);
