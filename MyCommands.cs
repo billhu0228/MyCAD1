@@ -419,8 +419,76 @@ namespace MyCAD1
                         WriteMessage(output, "X=" + zx.StartPoint.X.ToString());
                     }
                 }
+            }
+            var sorted = map.OrderBy(kv => kv.Value);
+            // Print them in order to the command-line
+            foreach (var item in sorted)
+            {
+                ed.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
+            }
+            tr.Commit();
+            tr.Dispose();
+        }
 
 
+        /// <summary>
+        /// 读取地质图
+        /// </summary>
+        [CommandMethod("dizhi", CommandFlags.UsePickSet)]
+        public static void DizhiTu()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            Transaction tr = db.TransactionManager.StartTransaction();
+
+
+            string output = Path.ChangeExtension(doc.Name, "dat");
+
+            if (doc == null)
+                return;
+            var ed = doc.Editor;
+
+            PromptSelectionOptions Opts = new PromptSelectionOptions();
+            Opts.MessageForAdding = "\n请选择地质图";
+            var psr = ed.GetSelection(Opts);
+            if (psr.Status != PromptStatus.OK)
+                return;
+            // We'll sort them based on a string value (the layer name)
+            var map = new Dictionary<ObjectId, string>();
+            var wordmap = new Dictionary<ObjectId, Point3d>();
+            var linemap = new Dictionary<ObjectId, double>();
+            foreach(dynamic id in psr.Value.GetObjectIds())
+            {
+                if (id.ObjectClass.Name == "AcDbText")
+                {
+                    DBText word = (DBText)tr.GetObject(id, OpenMode.ForRead);
+                    wordmap.Add(id, word.Position);                    
+                }
+                else if (id.ObjectClass.Name == "AcDbLine")
+                {
+                    Line zx = (Line)tr.GetObject(id, OpenMode.ForRead);
+                    linemap.Add(id, zx.StartPoint.Y);
+                }
+            }
+
+            Point3d searchP3d;
+
+
+            foreach (dynamic id in psr.Value.GetObjectIds())
+            {
+                if (id.ObjectClass.Name == "AcDbText")
+                {
+                    if (id.TextString.Contains("里程"))
+                    {
+                        WriteMessage(output, id.TextString);
+                        searchP3d = id.Position;
+                        
+                    }
+                    else if (id.TextString.Contains("孔口标高"))
+                    {
+                        WriteMessage(output, id.TextString);
+                    }
+                }
 
             }
             var sorted = map.OrderBy(kv => kv.Value);
@@ -428,17 +496,27 @@ namespace MyCAD1
             foreach (var item in sorted)
             {
                 ed.WriteMessage("\nObject {0} on layer {1}", item.Key, item.Value);
-
             }
-
-
-
             tr.Commit();
             tr.Dispose();
-
-
-
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         [CommandMethod("textext", CommandFlags.UsePickSet)]
@@ -523,6 +601,125 @@ namespace MyCAD1
         }
 
 
+        [CommandMethod("shark", CommandFlags.UsePickSet)]
+        public static void Shark()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                if (doc == null)
+                    return;
+                var ed = doc.Editor;
+
+                PromptSelectionOptions Opts = new PromptSelectionOptions();
+                Opts.MessageForAdding = "\n请选择直线";
+                var psr = ed.GetSelection(Opts);
+                if (psr.Status != PromptStatus.OK)
+                    return;
+                var Lines = from id in psr.Value.GetObjectIds() select (Line)tr.GetObject(id, OpenMode.ForRead);
+                var Arcs = from l in Lines where int.Parse(l.Layer) > 20 select l;
+                var Links = from l in Lines where int.Parse(l.Layer) == 3 select l;
+                var Braces = from l in Lines where int.Parse(l.Layer) == 4 select l ;
+
+                foreach(Line L in Arcs)
+                {
+                    int dir = L.StartPoint.Z > 0 ? 1 : -1;
+                    Point3d oldSt = L.StartPoint;
+                    Point3d oldEd = L.EndPoint;
+                    double absz_st = 18044.5 - (L.StartPoint.Y - 2920.1) * 1315.0 / 10833.0;
+                    double absz_ed = 18044.5 - (L.EndPoint.Y - 2920.1) * 1315.0 / 10833.0;
+                    Point3d newSt = new Point3d(L.StartPoint.X, L.StartPoint.Y, dir * absz_st);
+                    Point3d newEd = new Point3d(L.EndPoint.X, L.EndPoint.Y, dir * absz_ed);
+
+
+
+                    var Lk = from l in Links where l.StartPoint.DistanceTo(oldSt) <= 0.1 select l;
+                    if (Lk.Count() != 0)
+                    {
+                        foreach(Line curlink in Lk)
+                        {
+                            curlink.UpgradeOpen();
+                            curlink.StartPoint = newSt;
+                        }
+
+                    }
+
+                    Lk = from l in Links where l.StartPoint.DistanceTo(oldEd) <= 0.1 select l;
+                    if (Lk.Count() != 0)
+                    {
+                        foreach (Line curlink in Lk)
+                        {
+                            curlink.UpgradeOpen();
+                            curlink.StartPoint = newEd;
+                        }
+                    }
+
+
+
+
+                    var BrSt = from l in Braces where l.StartPoint.DistanceTo(oldSt) <= 0.1 select l;
+                    if (BrSt.Count() != 0)
+                    {
+                        foreach (Line curlink in BrSt)
+                        {
+                            curlink.UpgradeOpen();
+                            curlink.StartPoint = newSt;
+                        }
+                    }
+
+                    BrSt = from l in Braces where l.StartPoint.DistanceTo(oldEd) <= 0.1 select l;
+                    if (BrSt.Count() != 0)
+                    {
+                        foreach (Line curlink in BrSt)
+                        {
+                            curlink.UpgradeOpen();
+                            curlink.StartPoint = newEd;
+                        }
+                    }
+
+
+
+                    var BrEd = from l in Braces where l.EndPoint.DistanceTo(oldSt) <= 0.1 select l;
+                    if (BrEd.Count() != 0)
+                    {
+                        foreach (Line curlink in BrEd)
+                        {
+                            curlink.UpgradeOpen();
+                            curlink.EndPoint = newSt;
+                        }
+                    }
+                    BrEd = from l in Braces where l.EndPoint.DistanceTo(oldEd) <= 0.1 select l;
+                    if (BrEd.Count() != 0)
+                    {
+                        foreach (Line curlink in BrEd)
+                        {
+                            curlink.UpgradeOpen();
+                            curlink.EndPoint = newEd;
+                        }
+                    }
+
+
+
+
+                    L.UpgradeOpen();
+                    L.StartPoint = newSt;
+                    L.EndPoint = newEd;
+                }
+
+
+                ed.WriteMessage("{0},{1},{2}",Arcs.Count(),Links.Count(),Braces.Count());
+                
+                tr.Commit();
+            }
+        }
+
+
+
+
+
+
+
 
         [CommandMethod("bSumL", CommandFlags.UsePickSet)]
         public static void LineSum()
@@ -562,6 +759,27 @@ namespace MyCAD1
             }
         }
 
+
+
+        public static void SearchAndWrite(string path, Point3d bgpoint, Dictionary<ObjectId,Point3d> worddic,
+            Dictionary<ObjectId, double> linedic)
+        {
+            var slect=from d in linedic
+                      where d.Value<bgpoint.Y && d.Value>bgpoint.Y-200
+                      select d.Value;
+            
+
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.BaseStream.Seek(0, SeekOrigin.End);
+                    
+                    sw.Flush();
+                }
+            }
+
+        }
 
 
 

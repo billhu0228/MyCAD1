@@ -364,8 +364,10 @@ namespace MyCAD1
                 worksheet.Cells[LineIdx, 21] = Deb;
                 worksheet.Cells[LineIdx, 22] = Rem;
                 worksheet.Cells[LineIdx, 23] = Enr;
-                worksheet.Cells[LineIdx, 24] = " ";
+                worksheet.Cells[LineIdx, 24] = curDatlotObj.H0.ToString(); 
 
+
+                
 
 
 
