@@ -31,17 +31,20 @@ namespace MyCAD1
         public string pk_string;
         public Polyline dmx, sjx;
     }
+    public struct DZT
+    {
+        public double pk_double;
+        public double kongkou;
+        public Dictionary<string, double> DizhiBiaogaoDic;        
+    }
+
+
     public class Drawing
     {
 
 
         public List<DMT> Dmt_list;
-
-
-        
-
-        
-
+        public List<DZT> Dzt_list;
 
 
 
@@ -69,6 +72,19 @@ namespace MyCAD1
                 ed.WriteMessage("\n断面图数据读取成功");
             }
 
+            // 初始化地层图列表
+            // 等到下次在写。。。。           
+
+            //string dicengpath = BPublicFunctions.GetXPath("选择地层数据", "地层图提取文件|*.dat");
+            //if (dicengpath == "")
+            //{
+            //    return;
+            //}
+            //else
+            //{
+            //    Dzt_list = IniDZT(dicengpath);
+            //    ed.WriteMessage("\n地层数据读取成功");
+            //}
 
 
             //读取数据
@@ -89,23 +105,6 @@ namespace MyCAD1
             // 生成绘图id序列           
 
             var IDtoPolot = Parameters.AsEnumerable().Select(t =>t.Field<int>("id")).ToList();
-
-            //PromptKeywordOptions KO = new PromptKeywordOptions("\n请输入涵洞号");           
-            //KO.Keywords.Add("All");
-            //KO.Keywords.Add("Single");
-            //KO.AllowNone = true;
-
-            //PromptResult pResults = ed.GetKeywords(KO);
-            //if (pResults.Status == PromptStatus.OK)
-            //{
-            //    if (pResults.StringResult == "All")
-            //    {
-            //        //
-
-            //    }
-            //}
-
-
 
 
             // 实例化并绘图
@@ -135,9 +134,14 @@ namespace MyCAD1
                 Point3d DmxRefP = relatedDMT.dmx.GetClosestPointTo(PointDMT, Vector3d.YAxis, true);
 
 
-
-
-
+                // 查询地层图
+                //DZT relatedDZT = DztLookUp(Dzt_list, TheDalot.Pk_string());
+                //if (relatedDZT.DizhiBiaogaoDic.Count() == 0)
+                //{
+                //    ed.WriteMessage("\n里程" + TheDalot.Pk_string() + "涵洞无地质信息，无法绘制");
+                //    continue;
+                //}
+                //TheDalot.relatedDZT = relatedDZT;
 
 
                 //绘图
@@ -251,8 +255,9 @@ namespace MyCAD1
                     tr.AddNewlyCreatedDBObject(theNote, true);
                     theNoteZH.TextStyleId = st["fsdb"];
                     theNoteZH.Width = 245;
-                    btr.AppendEntity(theNoteZH);
-                    tr.AddNewlyCreatedDBObject(theNoteZH, true);
+                    // 中文
+                    //btr.AppendEntity(theNoteZH);
+                    //tr.AddNewlyCreatedDBObject(theNoteZH, true);
 
 
                     tr.Commit();
@@ -541,7 +546,86 @@ namespace MyCAD1
         }
 
 
+        private List<DZT> IniDZT(string filepath)
+        {
+            List<DZT> result = new List<DZT>();
 
+            StreamReader sR = File.OpenText(filepath);
+            string nextLine;
+            DZT item = new DZT();
+            Dictionary<string, double> BG = new Dictionary<string, double>();
+            int i = 0;
+            int jj = 0;
+            while (true)
+            {
+                i++;
+                nextLine = sR.ReadLine();
+                if (nextLine == null)
+                {
+                    item.DizhiBiaogaoDic = BG;                    
+                    result.Add(item);
+                    BG = new Dictionary<string, double>();
+                    break;
+                }
+                else if (nextLine.StartsWith("#"))
+                {
+                    if (i != 1)
+                    {
+                        item.DizhiBiaogaoDic = BG;
+                        result.Add(item);
+                        BG = new Dictionary<string, double>();
+                        item = new DZT();
+                        jj = 0;
+                    }
+                    continue;
+                }
+                else if (nextLine.StartsWith("坐标"))
+                {
+                    MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
+                    item.pk_double = Convert.ToDouble(matches[2].Value)*1000+ Convert.ToDouble(matches[3].Value);
+                }
+                else if (nextLine.StartsWith("孔口"))
+                {
+                    MatchCollection matches = Regex.Matches(nextLine, @"(\d+\.?\d*)");
+                    item.kongkou = Convert.ToDouble(matches[0].Value);
+
+                }
+                else if(nextLine.ToCharArray()[0]>=0x4e00 && nextLine.ToCharArray()[0]<=0x9fbb)
+                {
+                    string res = nextLine.Split("：".ToCharArray())[0]+"-"+jj.ToString();
+                    jj++;
+                    double data = 0;
+                    try
+                    {
+                        data = Convert.ToDouble(sR.ReadLine());
+                    }
+                    catch
+                    {
+                        data = 0;
+                    }
+                    finally
+                    {
+                        BG.Add(res, data);
+                    }                    
+                }
+            }
+            sR.Close();
+            return result;
+        }
+
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// 初始化断面图
+        /// </summary>
+        /// <param name="filepath">数据文件路径</param>
+        /// <returns></returns>
         private List<DMT> IniDMT(string filepath)
         {
             List<DMT> result = new List<DMT>();
@@ -660,6 +744,31 @@ namespace MyCAD1
             return res;
         }
 
+        /// <summary>
+        /// 地质图检索
+        /// </summary>
+        /// <param name="repo">地质图列表</param>
+        /// <param name="pk">里程（字符串）</param>
+        /// <returns></returns>
+        private DZT DztLookUp(List<DZT>repo,string pk)
+        {
+            DZT res = new DZT();
+            double aim = Dalot.PkString2Double(pk);
+            var dist = from item in repo select Math.Abs(item.pk_double - aim);
+            double dist_min = dist.Min();
+            
+            foreach(DZT item in repo)
+            {
+                if (Math.Abs(item.pk_double - aim) == dist_min)
+                {
+                    res=item;
+                    break;
+                }
+            }
+
+            return res;
+        }
+
 
         private DMT DmtLookUp(List<DMT> repo,string pk)
         {
@@ -674,6 +783,13 @@ namespace MyCAD1
                 }
             }
             return res;
+        }
+        private string DiZhi_Name(string linetext)
+        {
+            
+                return linetext.Split("：".ToCharArray())[0];
+
+            
         }
 
 

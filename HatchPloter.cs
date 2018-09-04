@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -14,6 +14,89 @@ namespace MyCAD1
 {
     class HatchPloter
     {
+
+
+        public static void PlotDZT(Database db,Point2d pos,DZT relatedDZT)
+        {
+            Dictionary<string, string> patterdic = new Dictionary<string, string>();
+            patterdic.Add("中砂砾", "AR-CONC");
+            patterdic.Add("黏土", "ANSI31");
+            patterdic.Add("中砂", "DOTS");
+            patterdic.Add("全风化硅质板岩", "CORK");
+            patterdic.Add("中风化石英闪长岩", "CROSS");
+            patterdic.Add("块体", "GRAVEL");
+            patterdic.Add("其他", "ANSI38");
+            Dictionary<string, int> patterscale = new Dictionary<string, int>();
+            patterscale.Add("中砂砾",1);
+            patterscale.Add("黏土", 15);
+            patterscale.Add("中砂", 30);
+            patterscale.Add("全风化硅质板岩", 15);
+            patterscale.Add("中风化石英闪长岩", 15);
+            patterscale.Add("块体", 15);
+            patterscale.Add("其他", 15);
+
+            using (Transaction tr = db.TransactionManager.StartTransaction())
+            {
+                BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
+                    OpenMode.ForWrite) as BlockTableRecord;
+                foreach(string key in relatedDZT.DizhiBiaogaoDic.Keys)
+                {
+                    double topbg;
+                    double botbg = relatedDZT.DizhiBiaogaoDic[key];
+                    if (relatedDZT.DizhiBiaogaoDic.Count() == 1)
+                    {
+                        topbg = relatedDZT.kongkou;
+                    }
+                    else
+                    {
+                        List<double> bglist = relatedDZT.DizhiBiaogaoDic.Values.ToList();
+                        int nextindex = bglist.FindIndex(a=>a==botbg);
+                        topbg = bglist[nextindex];
+                    }
+                    Polyline pl = new Polyline();
+                    //pl.AddVertexAt(0,)
+
+
+                    Hatch hat=new Hatch();
+                    try
+                    {
+                        hat.SetHatchPattern(HatchPatternType.PreDefined, patterdic[key]);
+                        hat.PatternScale = patterscale[key];
+                    }
+                    catch
+                    {
+                        hat.SetHatchPattern(HatchPatternType.PreDefined, patterdic["其他"]);
+                        hat.PatternScale = 15;
+                    }
+                    modelSpace.AppendEntity(hat);
+                    tr.AddNewlyCreatedDBObject(hat, true);
+                    //hat.Layer = "填充";
+                    //hat.Associative = true;
+                    //hat.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });
+                    //hat.EvaluateHatch(true);
+
+
+
+
+
+
+
+                }
+            }
+
+        }
+
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// 绘制填充
         /// </summary>

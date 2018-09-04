@@ -38,6 +38,7 @@ namespace MyCAD1
         public double MouthT, PlateT;//伸出嘴厚度，底板厚度
         public double FooterW;
         public string DesignNo;
+        public DZT relatedDZT;
                
 
         public Dalot(double cPk, double cAng, double cSlop, double cLength, double cSegLength, double cXMidDist,
@@ -93,7 +94,10 @@ namespace MyCAD1
                     break;
             }
             dH = cdH;
-            
+            relatedDZT = new DZT();
+            relatedDZT.kongkou = 0;
+            relatedDZT.pk_double = 0;
+            relatedDZT.DizhiBiaogaoDic = new Dictionary<string, double>();           
         }
 
 

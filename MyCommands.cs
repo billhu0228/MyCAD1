@@ -456,7 +456,7 @@ namespace MyCAD1
             // We'll sort them based on a string value (the layer name)
             var map = new Dictionary<ObjectId, string>();
             var wordmap = new Dictionary<ObjectId, Point3d>();
-            var linemap = new Dictionary<ObjectId, double>();
+            var linemap = new Dictionary<ObjectId, Point3d>();
             foreach(dynamic id in psr.Value.GetObjectIds())
             {
                 if (id.ObjectClass.Name == "AcDbText")
@@ -467,13 +467,13 @@ namespace MyCAD1
                 else if (id.ObjectClass.Name == "AcDbLine")
                 {
                     Line zx = (Line)tr.GetObject(id, OpenMode.ForRead);
-                    linemap.Add(id, zx.StartPoint.Y);
+                    linemap.Add(id, zx.GetMidPoint3d());
                 }
             }
 
             Point3d searchP3d;
 
-
+            
             foreach (dynamic id in psr.Value.GetObjectIds())
             {
                 if (id.ObjectClass.Name == "AcDbText")
@@ -482,10 +482,11 @@ namespace MyCAD1
                     {
                         WriteMessage(output, id.TextString);
                         searchP3d = id.Position;
-                        
+                        SearchAndWrite(output, searchP3d, wordmap, linemap,tr);                        
                     }
                     else if (id.TextString.Contains("孔口标高"))
                     {
+                        WriteMessage(output, "#------------------------------------------------------#");
                         WriteMessage(output, id.TextString);
                     }
                 }
@@ -762,22 +763,49 @@ namespace MyCAD1
 
 
         public static void SearchAndWrite(string path, Point3d bgpoint, Dictionary<ObjectId,Point3d> worddic,
-            Dictionary<ObjectId, double> linedic)
+            Dictionary<ObjectId, Point3d> linedic,Transaction cur_tr)
         {
             var slect=from d in linedic
-                      where d.Value<bgpoint.Y && d.Value>bgpoint.Y-200
-                      select d.Value;
-            
+                      where (d.Value.Y<bgpoint.Y) && (d.Value.Y>bgpoint.Y-200) &&(d.Value.X<bgpoint.X)
+                      select d.Value.Y;
+            slect=slect.ToList().Distinct();
+            double y0 = slect.Min();
 
-            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+            var slectwd = from wd in worddic
+                          where (wd.Value.Y > y0) && (wd.Value.Y < bgpoint.Y)
+                          && (wd.Value.X < bgpoint.X + 100) && (wd.Value.X > bgpoint.X - 60)
+                          select wd.Key;
+            slectwd = slectwd.ToList();
+            foreach (ObjectId id in slectwd)
             {
-                using (StreamWriter sw = new StreamWriter(fs))
+                DBText wd = (DBText)cur_tr.GetObject(id, OpenMode.ForRead);
+                if (wd.TextString.ToCharArray()[0] >= 0x4e00 && wd.TextString.ToCharArray()[0] <= 0x9fbb)
                 {
-                    sw.BaseStream.Seek(0, SeekOrigin.End);
-                    
-                    sw.Flush();
+                    bool opt1 = wd.TextString.Contains("径");
+                    bool opt2 = wd.TextString.Contains("色");
+                    bool opt3 = wd.TextString.Contains("：");
+                    if (opt3&&(opt1||opt2))
+                    {
+                        WriteMessage(path, wd.TextString);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        double tmp = Convert.ToDouble(wd.TextString);
+                        if (tmp > 50)
+                        {
+                            WriteMessage(path, wd.TextString);
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
                 }
             }
+
 
         }
 

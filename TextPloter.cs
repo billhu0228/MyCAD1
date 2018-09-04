@@ -192,8 +192,9 @@ namespace MyCAD1
                 theTitleZh.Layer = "标注";
                 theTitleZh.TextStyleId = st["fsdb"];
                 theTitleZh.WidthFactor = 0.85;
-                recorder.AppendEntity(theTitleZh);
-                tr.AddNewlyCreatedDBObject(theTitleZh, true);
+                // 取消中文
+                //recorder.AppendEntity(theTitleZh);
+                //tr.AddNewlyCreatedDBObject(theTitleZh, true);
 
                 Dictionary<int,string[]> table = new Dictionary<int, string[]>();
 
