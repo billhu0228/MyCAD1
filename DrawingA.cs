@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Collections;
 
 [assembly: CommandClass(typeof(MyCAD1.Drawing))]
 
@@ -34,8 +35,8 @@ namespace MyCAD1
     public struct DZT
     {
         public double pk_double;
-        public double kongkou;
-        public Dictionary<string, double> DizhiBiaogaoDic;        
+        public double kongkou;        
+        public List<Tuple<string, double>> DZBG;
     }
 
 
@@ -51,7 +52,9 @@ namespace MyCAD1
         [CommandMethod("main")]
         public void Main()
         {
+            //--------------------------------------------------------------------------------------
             // 基本句柄
+            //--------------------------------------------------------------------------------------
             Document doc = Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
             Editor ed = doc.Editor;
@@ -59,8 +62,9 @@ namespace MyCAD1
             MOExcel.Application app = new MOExcel.Application();
             MOExcel.Workbook wbook = app.Workbooks.Add(Type.Missing);
             MOExcel.Worksheet wsheet = (MOExcel.Worksheet)wbook.Worksheets[1];
-
+            //--------------------------------------------------------------------------------------
             // 初始化带帽图列表
+            //--------------------------------------------------------------------------------------
             string dmtpath = BPublicFunctions.GetXPath("选择带帽图数据","断面图提取文件|*.dat");
             if (dmtpath == "")
             {
@@ -71,23 +75,23 @@ namespace MyCAD1
                 Dmt_list = IniDMT(dmtpath);
                 ed.WriteMessage("\n断面图数据读取成功");
             }
+            //--------------------------------------------------------------------------------------
+            // 初始化地层图列表                     
+            //--------------------------------------------------------------------------------------
+            string dicengpath = BPublicFunctions.GetXPath("选择地层数据", "地层图提取文件|*.dat");
+            if (dicengpath == "")
+            {
+                return;
+            }
+            else
+            {
+                Dzt_list = IniDZT(dicengpath);
+                ed.WriteMessage("\n地层数据读取成功");
+            }
 
-            // 初始化地层图列表
-            // 等到下次在写。。。。           
-
-            //string dicengpath = BPublicFunctions.GetXPath("选择地层数据", "地层图提取文件|*.dat");
-            //if (dicengpath == "")
-            //{
-            //    return;
-            //}
-            //else
-            //{
-            //    Dzt_list = IniDZT(dicengpath);
-            //    ed.WriteMessage("\n地层数据读取成功");
-            //}
-
-
+            //--------------------------------------------------------------------------------------
             //读取数据
+            //--------------------------------------------------------------------------------------
             Dalot TheDalot;
             System.Data.DataTable Parameters = new System.Data.DataTable();
 
@@ -101,14 +105,15 @@ namespace MyCAD1
                 Parameters = GetDataFromExcelByCom(true, aa);                
                 ed.WriteMessage("\n涵洞数据读取成功");
             }
-
+            //--------------------------------------------------------------------------------------
             // 生成绘图id序列           
-
+            //--------------------------------------------------------------------------------------
             var IDtoPolot = Parameters.AsEnumerable().Select(t =>t.Field<int>("id")).ToList();
 
-
+            //--------------------------------------------------------------------------------------
             // 实例化并绘图
-            foreach(int ii in IDtoPolot)            
+            //--------------------------------------------------------------------------------------
+            foreach (int ii in IDtoPolot)            
             {
                 
                 // 实例化涵洞
@@ -135,13 +140,13 @@ namespace MyCAD1
 
 
                 // 查询地层图
-                //DZT relatedDZT = DztLookUp(Dzt_list, TheDalot.Pk_string());
-                //if (relatedDZT.DizhiBiaogaoDic.Count() == 0)
-                //{
-                //    ed.WriteMessage("\n里程" + TheDalot.Pk_string() + "涵洞无地质信息，无法绘制");
-                //    continue;
-                //}
-                //TheDalot.relatedDZT = relatedDZT;
+                DZT relatedDZT = DztLookUp(Dzt_list, TheDalot.Pk_string());
+                if (relatedDZT.DZBG.Count() == 0)
+                {
+                    ed.WriteMessage("\n里程" + TheDalot.Pk_string() + "涵洞无地质信息，无法绘制");
+                    continue;
+                }
+                TheDalot.relatedDZT = relatedDZT;
 
 
                 //绘图
@@ -272,9 +277,9 @@ namespace MyCAD1
 
             }
 
-
+            //--------------------------------------------------------------------------------------
             // 制作表头 储存汇总数量表
-
+            //--------------------------------------------------------------------------------------
             wsheet.Cells[1, 1] = "No";
             MOExcel.Range range = wsheet.get_Range("A1", "A4"); 
             range.Merge(0);
@@ -383,9 +388,12 @@ namespace MyCAD1
 
 
 
-
-
-
+        /// <summary>
+        /// 初始化涵洞对象
+        /// </summary>
+        /// <param name="theDT">数据表</param>
+        /// <param name="DalotId">涵洞索引号</param>
+        /// <returns></returns>
         public Dalot GetDalotFromDataTable(System.Data.DataTable theDT, int DalotId)
         {
             var results = from myRow in theDT.AsEnumerable()
@@ -545,7 +553,11 @@ namespace MyCAD1
             }
         }
 
-
+        /// <summary>
+        /// 初始化地质图列表
+        /// </summary>
+        /// <param name="filepath"></param>
+        /// <returns></returns>
         private List<DZT> IniDZT(string filepath)
         {
             List<DZT> result = new List<DZT>();
@@ -553,7 +565,9 @@ namespace MyCAD1
             StreamReader sR = File.OpenText(filepath);
             string nextLine;
             DZT item = new DZT();
-            Dictionary<string, double> BG = new Dictionary<string, double>();
+            Tuple<string, double> tuple = new Tuple<string, double>("",0.0);
+            List<Tuple<string, double>> theBGList = new List<Tuple<string, double>>();
+
             int i = 0;
             int jj = 0;
             while (true)
@@ -562,18 +576,18 @@ namespace MyCAD1
                 nextLine = sR.ReadLine();
                 if (nextLine == null)
                 {
-                    item.DizhiBiaogaoDic = BG;                    
+                    item.DZBG=theBGList;                    
                     result.Add(item);
-                    BG = new Dictionary<string, double>();
+                    theBGList = new List<Tuple<string, double>>();
                     break;
                 }
                 else if (nextLine.StartsWith("#"))
                 {
                     if (i != 1)
                     {
-                        item.DizhiBiaogaoDic = BG;
+                        item.DZBG = theBGList;
                         result.Add(item);
-                        BG = new Dictionary<string, double>();
+                        theBGList = new List<Tuple<string, double>>();
                         item = new DZT();
                         jj = 0;
                     }
@@ -592,7 +606,7 @@ namespace MyCAD1
                 }
                 else if(nextLine.ToCharArray()[0]>=0x4e00 && nextLine.ToCharArray()[0]<=0x9fbb)
                 {
-                    string res = nextLine.Split("：".ToCharArray())[0]+"-"+jj.ToString();
+                    string res = nextLine.Split("：".ToCharArray())[0];
                     jj++;
                     double data = 0;
                     try
@@ -605,7 +619,8 @@ namespace MyCAD1
                     }
                     finally
                     {
-                        BG.Add(res, data);
+                        tuple = new Tuple<string, double>(res, data);
+                        theBGList.Add(tuple);
                     }                    
                 }
             }

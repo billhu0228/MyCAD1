@@ -16,7 +16,7 @@ namespace MyCAD1
     {
 
 
-        public static void PlotDZT(Database db,Point2d pos,DZT relatedDZT)
+        public static void PlotDZT(Database db,Point2d pos,double refH,DZT relatedDZT,int s)
         {
             Dictionary<string, string> patterdic = new Dictionary<string, string>();
             patterdic.Add("中砂砾", "AR-CONC");
@@ -37,32 +37,67 @@ namespace MyCAD1
 
             using (Transaction tr = db.TransactionManager.StartTransaction())
             {
+                TextStyleTable st = tr.GetObject(db.TextStyleTableId, OpenMode.ForRead) as TextStyleTable;
                 BlockTable blockTbl = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                 BlockTableRecord modelSpace = tr.GetObject(blockTbl[BlockTableRecord.ModelSpace],
                     OpenMode.ForWrite) as BlockTableRecord;
-                foreach(string key in relatedDZT.DizhiBiaogaoDic.Keys)
+
+                for(int i = 0; i < relatedDZT.DZBG.Count();i++)
                 {
+                    Tuple<string, double> tp = relatedDZT.DZBG[i];
                     double topbg;
-                    double botbg = relatedDZT.DizhiBiaogaoDic[key];
-                    if (relatedDZT.DizhiBiaogaoDic.Count() == 1)
+                    double botbg = tp.Item2;
+
+                    DBText theTitle = new DBText();
+                    theTitle.TextString = string.Format("{0:F3}", botbg);
+                    theTitle.Height = 2.5 * s;
+                    theTitle.Position = pos.Convert3D(0 + 2200 + 500, (botbg - refH) * 1000);
+                    theTitle.HorizontalMode = TextHorizontalMode.TextLeft;
+                    theTitle.VerticalMode = TextVerticalMode.TextBottom;
+                    theTitle.AlignmentPoint = theTitle.Position;
+                    theTitle.Layer = "填充";
+                    theTitle.TextStyleId = st["fsdb"];
+                    theTitle.WidthFactor = 0.85;
+                    modelSpace.AppendEntity(theTitle);
+                    tr.AddNewlyCreatedDBObject(theTitle, true);
+
+                    if (relatedDZT.DZBG.Count() == 1)
                     {
                         topbg = relatedDZT.kongkou;
+
+                        theTitle = new DBText();
+                        theTitle.TextString = string.Format("{0:F3}",topbg);
+                        theTitle.Height = 2.5*s;
+                        theTitle.Position = pos.Convert3D(0+2200+500, (topbg - refH) * 1000);
+                        theTitle.HorizontalMode = TextHorizontalMode.TextLeft;
+                        theTitle.VerticalMode = TextVerticalMode.TextBottom;
+                        theTitle.AlignmentPoint = theTitle.Position;
+                        theTitle.Layer = "填充";
+                        theTitle.TextStyleId = st["fsdb"];
+                        theTitle.WidthFactor = 0.85;
+                        modelSpace.AppendEntity(theTitle);
+                        tr.AddNewlyCreatedDBObject(theTitle, true);
                     }
                     else
-                    {
-                        List<double> bglist = relatedDZT.DizhiBiaogaoDic.Values.ToList();
-                        int nextindex = bglist.FindIndex(a=>a==botbg);
-                        topbg = bglist[nextindex];
+                    {                        
+                        topbg = relatedDZT.DZBG[i+1].Item2;
                     }
+
+
                     Polyline pl = new Polyline();
-                    //pl.AddVertexAt(0,)
-
-
-                    Hatch hat=new Hatch();
+                    pl.AddVertexAt(0, pos.Convert2D(0+2200, (topbg - refH) * 1000), 0, 0, 0);
+                    pl.AddVertexAt(1, pos.Convert2D(500 + 2200, (topbg - refH) * 1000), 0, 0, 0);
+                    pl.AddVertexAt(2, pos.Convert2D(500 + 2200, (botbg - refH) * 1000), 0, 0, 0);
+                    pl.AddVertexAt(3, pos.Convert2D(0 + 2200, (botbg - refH) * 1000), 0, 0, 0);
+                    pl.Closed = true;
+                    pl.Layer = "填充";
+                    modelSpace.AppendEntity(pl);
+                    tr.AddNewlyCreatedDBObject(pl, true);
+                    Hatch hat = new Hatch();
                     try
                     {
-                        hat.SetHatchPattern(HatchPatternType.PreDefined, patterdic[key]);
-                        hat.PatternScale = patterscale[key];
+                        hat.SetHatchPattern(HatchPatternType.PreDefined, patterdic[tp.Item1]);
+                        hat.PatternScale = patterscale[tp.Item1];
                     }
                     catch
                     {
@@ -71,20 +106,14 @@ namespace MyCAD1
                     }
                     modelSpace.AppendEntity(hat);
                     tr.AddNewlyCreatedDBObject(hat, true);
-                    //hat.Layer = "填充";
-                    //hat.Associative = true;
-                    //hat.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });
-                    //hat.EvaluateHatch(true);
-
-
-
-
-
-
+                    hat.Layer = "填充";
+                    hat.Associative = true;
+                    hat.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });
+                    hat.EvaluateHatch(true);
 
                 }
+                tr.Commit();
             }
-
         }
 
 

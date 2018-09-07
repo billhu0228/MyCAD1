@@ -97,7 +97,7 @@ namespace MyCAD1
             relatedDZT = new DZT();
             relatedDZT.kongkou = 0;
             relatedDZT.pk_double = 0;
-            relatedDZT.DizhiBiaogaoDic = new Dictionary<string, double>();           
+            relatedDZT.DZBG = new List<Tuple<string, double>>();           
         }
 
 
@@ -582,6 +582,10 @@ namespace MyCAD1
                         new string[] { "Joint,e=1.5cm" }, false, s);
                 }
 
+                // 地质图
+                HatchPloter.PlotDZT(db, LSets[1].StartPoint.Convert2D(), H0 + (LSets[1].StartPoint.Y - AnchorPoint.Y) / 1000, relatedDZT,s);
+
+
                 //出入口
                 Point2d[] Verts;
                 if (Amont == AType.BZQ)
@@ -615,6 +619,7 @@ namespace MyCAD1
                     TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_left.GetPoint2dAt(0).Convert2D(-10 * s, 8 * s), s);
                     DimPloter.BiaoGao((Wall_left.GetPoint2dAt(5).Y-AnchorPoint.Y)/1000+H0, Wall_left.GetPoint2dAt(5).Convert3D(), modelSpace, tr, blockTbl, s);
                     DimPloter.Dim0(db, Wall_left.GetPoint3dAt(5), Wall_left.GetPoint3dAt(12), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
+
 
                     // 右八字墙
                     Wall_right = PolylinePloter.PlotWall(db, LSets[0].EndPoint.Convert2D(), Sect[2], slop_rad, false);
@@ -691,6 +696,7 @@ namespace MyCAD1
                     TextPloter.PrintCirText(db, (int)Sect[5]/10, Wall_right.GetPoint2dAt(0).Convert2D(10 * s, 8 * s), s);
                     DimPloter.BiaoGao((Wall_right.GetPoint2dAt(5).Y - AnchorPoint.Y) / 1000 + H0, Wall_right.GetPoint2dAt(5).Convert3D(), modelSpace, tr, blockTbl, s);
                     DimPloter.Dim0(db, Wall_right.GetPoint3dAt(5), Wall_right.GetPoint3dAt(12), AnchorPoint.Convert3D(0, delt2 + 10 * s), DimStyleID);
+
 
                     // 卵石
                     Verts = new Point2d[]  {
@@ -938,7 +944,7 @@ namespace MyCAD1
             }
 
 
-
+     
 
             tr.Commit();
             tr.Dispose();
