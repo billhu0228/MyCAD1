@@ -772,10 +772,20 @@ namespace MyCAD1
             double y0 = slect.Min();
 
             var slectwd = from wd in worddic
-                          where (wd.Value.Y > y0) && (wd.Value.Y < bgpoint.Y)
+                          where (wd.Value.Y > y0-3) && (wd.Value.Y < bgpoint.Y)
                           && (wd.Value.X < bgpoint.X + 100) && (wd.Value.X > bgpoint.X - 60)
                           select wd.Key;
             slectwd = slectwd.ToList();
+            List<string> slectText = new List<string>();
+            foreach (ObjectId id in slectwd)
+            {
+                DBText wd = (DBText)cur_tr.GetObject(id, OpenMode.ForRead);
+                slectText.Add(wd.TextString);
+            }
+
+
+
+            bool isWrite = false;
             foreach (ObjectId id in slectwd)
             {
                 DBText wd = (DBText)cur_tr.GetObject(id, OpenMode.ForRead);
@@ -787,6 +797,7 @@ namespace MyCAD1
                     if (opt3&&(opt1||opt2))
                     {
                         WriteMessage(path, wd.TextString);
+                        isWrite = true;
                     }
                 }
                 else
@@ -804,6 +815,10 @@ namespace MyCAD1
                         continue;
                     }
                 }
+            }
+            if (!isWrite)
+            {
+                ;
             }
 
 

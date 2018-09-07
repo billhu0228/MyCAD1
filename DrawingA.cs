@@ -774,7 +774,7 @@ namespace MyCAD1
             
             foreach(DZT item in repo)
             {
-                if (Math.Abs(item.pk_double - aim) == dist_min)
+                if (Math.Abs(item.pk_double - aim)- dist_min<0.001)
                 {
                     res=item;
                     break;

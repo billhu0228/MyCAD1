@@ -61,7 +61,7 @@ namespace MyCAD1
                     modelSpace.AppendEntity(theTitle);
                     tr.AddNewlyCreatedDBObject(theTitle, true);
 
-                    if (relatedDZT.DZBG.Count() == 1)
+                    if (relatedDZT.DZBG.Count() == 1||i+1==relatedDZT.DZBG.Count())
                     {
                         topbg = relatedDZT.kongkou;
 
