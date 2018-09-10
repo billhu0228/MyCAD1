@@ -55,7 +55,7 @@ namespace MyCAD1
                     theTitle.HorizontalMode = TextHorizontalMode.TextLeft;
                     theTitle.VerticalMode = TextVerticalMode.TextBottom;
                     theTitle.AlignmentPoint = theTitle.Position;
-                    theTitle.Layer = "填充";
+                    theTitle.Layer = "地质";
                     theTitle.TextStyleId = st["fsdb"];
                     theTitle.WidthFactor = 0.85;
                     modelSpace.AppendEntity(theTitle);
@@ -72,7 +72,7 @@ namespace MyCAD1
                         theTitle.HorizontalMode = TextHorizontalMode.TextLeft;
                         theTitle.VerticalMode = TextVerticalMode.TextBottom;
                         theTitle.AlignmentPoint = theTitle.Position;
-                        theTitle.Layer = "填充";
+                        theTitle.Layer = "地质";
                         theTitle.TextStyleId = st["fsdb"];
                         theTitle.WidthFactor = 0.85;
                         modelSpace.AppendEntity(theTitle);
@@ -90,7 +90,7 @@ namespace MyCAD1
                     pl.AddVertexAt(2, pos.Convert2D(500 + 2200, (botbg - refH) * 1000), 0, 0, 0);
                     pl.AddVertexAt(3, pos.Convert2D(0 + 2200, (botbg - refH) * 1000), 0, 0, 0);
                     pl.Closed = true;
-                    pl.Layer = "填充";
+                    pl.Layer = "地质";
                     modelSpace.AppendEntity(pl);
                     tr.AddNewlyCreatedDBObject(pl, true);
                     Hatch hat = new Hatch();
@@ -106,7 +106,7 @@ namespace MyCAD1
                     }
                     modelSpace.AppendEntity(hat);
                     tr.AddNewlyCreatedDBObject(hat, true);
-                    hat.Layer = "填充";
+                    hat.Layer = "地质";
                     hat.Associative = true;
                     hat.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });
                     hat.EvaluateHatch(true);

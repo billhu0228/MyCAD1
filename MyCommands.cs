@@ -72,6 +72,7 @@ namespace MyCAD1
                     ["虚线"] = 3,
                     ["填充"] = 8,
                     ["图框"] = 8,
+                    ["地质"] = 8,
                 };
                 List<string> Lname = new List<string>() { "CENTER", "DASHED" };
                 LayerTable acLyrTbl;
@@ -98,6 +99,7 @@ namespace MyCAD1
                         if (cid == 1) { acLyrTblRec.LinetypeObjectId = acLinTbl["CENTER"]; }
                         if (cid == 3) { acLyrTblRec.LinetypeObjectId = acLinTbl["DASHED"]; }
                         if (key == "图框") { acLyrTblRec.IsPlottable = false; }
+                        if (key == "地质") { acLyrTblRec.IsPlottable = false; }
                         acLyrTblRec.Name = key;
                         if (acLyrTbl.IsWriteEnabled == false) acLyrTbl.UpgradeOpen();
                         acLyrTbl.Add(acLyrTblRec);
@@ -112,6 +114,7 @@ namespace MyCAD1
                         if (cid == 1) { acLyrTblRec.LinetypeObjectId = acLinTbl["CENTER"]; }
                         if (cid == 3) { acLyrTblRec.LinetypeObjectId = acLinTbl["DASHED"]; }
                         if (key == "图框") { acLyrTblRec.IsPlottable = false; }
+                        if (key == "地质") { acLyrTblRec.IsPlottable = false; }
                     }
                 }
                 if (!acLyrTbl.Has("sjx"))

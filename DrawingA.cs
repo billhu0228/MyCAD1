@@ -270,7 +270,6 @@ namespace MyCAD1
 
 
                 //  表格
-
                 TextPloter.PrintTable(db, Point3d.Origin.Convert3D(0,-(ii+1)*297),TheDalot,relatedDMT, Parameters, AreaForTabe,wsheet,ii+4);
                 // 图名图号
                 TextPloter.PrintNumTitle(db, Point3d.Origin.Convert3D(0, -(ii + 1) * 297),TheDalot );
@@ -375,7 +374,7 @@ namespace MyCAD1
             wsheet.Cells.HorizontalAlignment = MOExcel.XlHAlign.xlHAlignCenter;//水平居中  
             wsheet.Cells.VerticalAlignment = MOExcel.XlVAlign.xlVAlignCenter;//垂直居中  
 
-            string bb =Path.Combine(Path.GetDirectoryName(aa), "数量汇总表");          
+            string bb =Path.Combine(Path.GetDirectoryName(aa), string.Format("数量汇总表{0}-{1}", IDtoPolot.Min(), IDtoPolot.Max()));          
             wsheet.SaveAs(bb, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
             wbook.Close(false, Type.Missing, Type.Missing);
             Marshal.ReleaseComObject(wbook);
