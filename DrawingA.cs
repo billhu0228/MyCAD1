@@ -78,17 +78,24 @@ namespace MyCAD1
             //--------------------------------------------------------------------------------------
             // 初始化地层图列表                     
             //--------------------------------------------------------------------------------------
-            string dicengpath = BPublicFunctions.GetXPath("选择地层数据", "地层图提取文件|*.dat");
+            string dicengpath = BPublicFunctions.GetXPath("选择地层数据", "地层图提取文件|*.csv;*.dat");
             if (dicengpath == "")
             {
                 return;
             }
             else
             {
-                Dzt_list = IniDZT(dicengpath);
+                if (dicengpath.EndsWith("csv"))
+                {
+                    Dzt_list = IniDZT2(dicengpath);
+                }
+                else  if(dicengpath.EndsWith("dat"))
+                {
+                    Dzt_list = IniDZT(dicengpath);
+                }
+                
                 ed.WriteMessage("\n地层数据读取成功");
             }
-
             //--------------------------------------------------------------------------------------
             //读取数据
             //--------------------------------------------------------------------------------------
@@ -339,7 +346,7 @@ namespace MyCAD1
             wsheet.Cells[3, 16] = "Béton\n(C25/30)";
             wsheet.Cells[4, 16] = "m3";
             wsheet.Cells[4, 16].Characters[2, 1].Font.Superscript = true;
-            wsheet.Cells[3, 17] = "Graveleux\nlatérique";
+            wsheet.Cells[3, 17] = "Substitution\nRadier";
             wsheet.Cells[4, 17] = "m3";
             wsheet.Cells[4, 17].Characters[2, 1].Font.Superscript = true;
             wsheet.Cells[2, 18] = "Etanchéité";
@@ -552,6 +559,63 @@ namespace MyCAD1
             }
         }
 
+
+        /// <summary>
+        /// 初始化地质图列表-根据一航数据
+        /// </summary>
+        /// <param name="filepath"></param>
+        /// <returns></returns>
+        private List<DZT> IniDZT2(string filepath)
+        {
+            var DZT_Csv = BPublicFunctions.OpenCSV(filepath).AsEnumerable();
+            List<DZT> result = new List<DZT>();
+            string datpath = Path.ChangeExtension(filepath, "dzt");
+            StreamReader sR = File.OpenText(datpath);            
+            DZT item = new DZT();
+            Tuple<string, double> tuple = new Tuple<string, double>("", 0.0);
+            List<Tuple<string, double>> theBGList = new List<Tuple<string, double>>();
+            string Content = sR.ReadToEnd();
+            sR.Close();
+            List<string> AllLines = Regex.Split(Content, "\r\n", RegexOptions.IgnoreCase).ToList();
+            
+
+            foreach(string lines in AllLines)
+            {
+                int i = AllLines.IndexOf(lines);
+                if (lines.StartsWith("HD"))
+                {
+                    // 初始化暂存
+                    theBGList=new List<Tuple<string, double>>();
+                    item = new DZT();
+                    // 查询桩号
+                    var ff = from row in DZT_Csv where row["孔号"].ToString() == lines select row["中心桩号"].ToString();
+                    if (ff.Count() == 0)
+                    {
+                        continue;
+                    }
+                    item.pk_double = Dalot.PkString2Double(ff.First());
+                    item.kongkou = double.Parse(AllLines[i - 1]);
+                    List<string> layers = new List<string>();
+                    for(int j=0; Regex.IsMatch(AllLines[i + 4 + j], "[\u4e00-\u9fbb]"); j++)
+                    {
+                        layers.Add( AllLines[i + 4 + j].Split(':')[0]);
+                    }
+                    for (int j = 0; j<layers.Count(); j++)
+                    {
+                        tuple = new Tuple<string, double>(layers[j], double.Parse(AllLines[i + 3 + layers.Count()+1 + j]));
+                        theBGList.Add(tuple);
+                    }
+                    item.DZBG = theBGList;
+                    result.Add(item);
+
+                }
+
+            }        
+            return result;
+        }
+
+
+
         /// <summary>
         /// 初始化地质图列表
         /// </summary>
@@ -559,9 +623,10 @@ namespace MyCAD1
         /// <returns></returns>
         private List<DZT> IniDZT(string filepath)
         {
+            //System.Data.DataTable DZT_Csv = BPublicFunctions.OpenCSV(filepath);
             List<DZT> result = new List<DZT>();
-
-            StreamReader sR = File.OpenText(filepath);
+            string datpath = Path.ChangeExtension(filepath, "dat");
+            StreamReader sR = File.OpenText(datpath);
             string nextLine;
             DZT item = new DZT();
             Tuple<string, double> tuple = new Tuple<string, double>("",0.0);

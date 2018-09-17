@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 [assembly: CommandClass(typeof(MyCAD1.MyCommands))]
 
@@ -434,6 +435,11 @@ namespace MyCAD1
         }
 
 
+
+
+
+
+
         /// <summary>
         /// 读取地质图
         /// </summary>
@@ -510,6 +516,84 @@ namespace MyCAD1
 
 
 
+
+
+        /// <summary>
+        /// 读取地质图(一航局)
+        /// </summary>
+        [CommandMethod("dizhi2", CommandFlags.UsePickSet)]
+        public static void DizhiTu2()
+        {
+            Document doc = Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+            Transaction tr = db.TransactionManager.StartTransaction();
+
+
+            string output = Path.ChangeExtension(doc.Name, "dat");
+
+            if (doc == null)
+                return;
+            var ed = doc.Editor;
+
+            PromptSelectionOptions Opts = new PromptSelectionOptions();
+            Opts.MessageForAdding = "\n请选择地质图";
+            var psr = ed.GetSelection(Opts);
+            if (psr.Status != PromptStatus.OK)
+                return;
+            // We'll sort them based on a string value (the layer name)
+            var map = new Dictionary<ObjectId, string>();
+            var wordmap = new Dictionary<ObjectId, Point3d>();
+            var linemap = new Dictionary<ObjectId, Point3d>();
+
+
+
+            foreach (dynamic id in psr.Value.GetObjectIds())
+            {
+
+                if (id.ObjectClass.Name == "AcDbText")
+                {
+                    DBText word = (DBText)tr.GetObject(id, OpenMode.ForRead);
+                    if (word.TextString.StartsWith("HD"))
+                    {
+                        WriteMessage(output, word.TextString);
+                        continue;
+                    }
+                    try
+                    {
+                        double temp=double.Parse(word.TextString);
+                        if (temp > 10)
+                        {       
+                            WriteMessage(output, temp.ToString());
+                        }                        
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+                else if (id.ObjectClass.Name == "AcDbMText")
+                {
+                    MText mText = (MText)tr.GetObject(id, OpenMode.ForRead);
+
+                    WriteMessage(output, mText.Text);                   
+
+                }
+
+            }
+
+
+            tr.Commit();
+            tr.Dispose();
+        }
+
+
+
+
+
+
+
+
+        
 
 
 

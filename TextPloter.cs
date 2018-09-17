@@ -303,7 +303,7 @@ namespace MyCAD1
                 table.Add(6, new string[] { "Guide roue", "C25/30", "m3", "-" });
                 table.Add(7, new string[] { "Armature", "FeE400", "kg", string.Format("{0:F1}", ASteel) });
                 table.Add(8, new string[] { "Béton", "C12/15", "m3", C15});
-                table.Add(9, new string[] { "Graveleux latérique", "-", "m3", Gra });
+                table.Add(9, new string[] { "Substitution Radier", "-", "m3", Gra });
                 table.Add(10, new string[] { "Badigeonnage des parements", "-", "m2", Bad });
                 table.Add(11, new string[] { "Motier hydro", "-", "m2", Mot });
                 table.Add(12, new string[] { "Joint", "-", "m2", Joint });

@@ -19,20 +19,28 @@ namespace MyCAD1
         public static void PlotDZT(Database db,Point2d pos,double refH,DZT relatedDZT,int s)
         {
             Dictionary<string, string> patterdic = new Dictionary<string, string>();
-            patterdic.Add("中砂砾", "AR-CONC");
+            patterdic.Add("中砂砾", "TRIANG");
             patterdic.Add("黏土", "ANSI31");
             patterdic.Add("中砂", "DOTS");
             patterdic.Add("全风化硅质板岩", "CORK");
-            patterdic.Add("中风化石英闪长岩", "CROSS");
+            patterdic.Add("强风化硅质板岩", "CROSS");
+            patterdic.Add("强风化岩", "CROSS");
+            patterdic.Add("中风化石英闪长岩", "AR-RSHKE");
+            patterdic.Add("中风化岩", "AR-RSHKE");
             patterdic.Add("块体", "GRAVEL");
+            patterdic.Add("耕植土", "ANSI37");
             patterdic.Add("其他", "ANSI38");
-            Dictionary<string, int> patterscale = new Dictionary<string, int>();
-            patterscale.Add("中砂砾",1);
+            Dictionary<string, double> patterscale = new Dictionary<string, double>();
+            patterscale.Add("中砂砾",15);
             patterscale.Add("黏土", 15);
             patterscale.Add("中砂", 30);
             patterscale.Add("全风化硅质板岩", 15);
-            patterscale.Add("中风化石英闪长岩", 15);
+            patterscale.Add("强风化硅质板岩", 15);
+            patterscale.Add("强风化岩", 15);
+            patterscale.Add("中风化石英闪长岩", 0.5);
+            patterscale.Add("中风化岩", 0.5);
             patterscale.Add("块体", 15);
+            patterscale.Add("耕植土", 15);
             patterscale.Add("其他", 15);
 
             using (Transaction tr = db.TransactionManager.StartTransaction())
@@ -110,6 +118,17 @@ namespace MyCAD1
                     hat.Associative = true;
                     hat.AppendLoop(HatchLoopTypes.Default, new ObjectIdCollection { pl.ObjectId });
                     hat.EvaluateHatch(true);
+
+                    try
+                    {
+                        hat.SetHatchPattern(HatchPatternType.PreDefined, patterdic[tp.Item1]);
+                        hat.PatternScale = patterscale[tp.Item1];
+                    }
+                    catch
+                    {
+                        hat.SetHatchPattern(HatchPatternType.PreDefined, patterdic["其他"]);
+                        hat.PatternScale = 15;
+                    }
 
                 }
                 tr.Commit();
